@@ -1,8 +1,7 @@
-
+const authenRoutes = require('./authenRoutes');
 
 function route(app) {
-    // Import các route
-
+    app.use("/api/auth", authenRoutes);
 }
 
 module.exports = route;
