@@ -1,0 +1,28 @@
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s cubic-bezier(0.39, 0.575, 0.565, 1) both;
+}
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 1s ease both;
+}
+@keyframes grow {
+  0% { width: 0; }
+  100% { width: 3rem; }
+}
+.animate-grow {
+  animation: grow 1s 0.3s cubic-bezier(0.39, 0.575, 0.565, 1) both;
+}
+@keyframes pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop {
+  animation: pop 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
+}
