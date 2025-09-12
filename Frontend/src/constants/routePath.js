@@ -8,5 +8,8 @@ export const ROUTE_PATH = {
   HOME: '/',
   ABOUT_US: '/aboutus',
 
+  // Product
+  CREATE_PRODUCT: '/create-product',
+
 
 };

@@ -4,6 +4,7 @@ import AppRoute from "./config/routes";
 import React from "react";
 import { Toaster } from "./lib/toaster";
 
+
 function App() {
   return (
     <>

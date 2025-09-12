@@ -5,10 +5,9 @@ const ProductSchema = new mongoose.Schema({
   description: String,
   price: { type: Number, required: true },
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
-  image: String,
+  images: [{ url: { type: String } }],
   stock: { type: Number, default: 0 },
-  qrSource: { type: mongoose.Schema.Types.ObjectId, ref: 'QRSource' },
-  promotion: { type: mongoose.Schema.Types.ObjectId, ref: 'Promotion' },
+  qrSource: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', ProductSchema);
