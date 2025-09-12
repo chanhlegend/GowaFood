@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import LiquidLoading from "../components/ui/LiquidLoading"
 import { useNavigate } from "react-router-dom"
 import { UserService } from "../services/authenService"
@@ -12,6 +12,29 @@ const LoginForm = () => {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Xử lý Google OAuth callback: lấy token từ URL, lưu vào localStorage và chuyển hướng
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('token_gowa', token);
+      // Lấy thông tin user từ token và lưu vào localStorage
+      UserService.getMe(token)
+        .then((res) => {
+          if (res.user) {
+            localStorage.setItem('user_gowa', JSON.stringify(res.user));
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          toast.success('Đăng nhập Google thành công!');
+          setTimeout(() => {
+            appNavigate(ROUTE_PATH.HOME);
+          }, 1500);
+        });
+    }
+  }, [appNavigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -37,8 +60,8 @@ const LoginForm = () => {
   }
 
   const handleGoogleLogin = () => {
-    // Handle Google login logic here
-    console.log("Google login clicked")
+    // Chuyển hướng sang backend Google OAuth endpoint
+    window.location.href = "http://localhost:3000/auth/google";
   }
 
   return (

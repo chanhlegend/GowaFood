@@ -29,4 +29,16 @@ export const UserService = {
       throw error.response ? error.response.data : new Error("Network Error");
     }
   },
+  getMe: async (token) => {
+    try {
+      const response = await axios.get(`${API_URL}/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : new Error("Network Error");
+    }
+  },
 };
