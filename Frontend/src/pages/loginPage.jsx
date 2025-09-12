@@ -42,8 +42,8 @@ const LoginForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-sm sm:max-w-md animate-fade-in-up">
+    <div className="flex items-center justify-center p-2 sm:p-4">
+      <div className="rounded-[10px] bg-white shadow-[6px_6px_30px_0_rgba(0,0,0,0.25)] p-4 sm:p-8 w-full max-w-sm sm:max-w-md animate-fade-in-up">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8 animate-fade-in">
           <h1 className="text-xl sm:text-2xl font-semibold text-green-600 mb-2">Đăng nhập</h1>
