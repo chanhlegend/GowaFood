@@ -51,12 +51,12 @@ export default function SignupForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-sm sm:max-w-md animate-fade-in-up">
-  <h1 className="text-xl sm:text-2xl font-semibold text-green-600 text-center mb-2 animate-fade-in">Tạo tài khoản</h1>
-  <div className="w-10 sm:w-12 h-0.5 bg-black mx-auto mb-6 sm:mb-8 animate-grow"></div>
+    <div className="flex items-center justify-center p-2 sm:p-4">
+      <div className="rounded-[10px] bg-white shadow-[6px_6px_30px_0_rgba(0,0,0,0.25)] p-4 sm:p-8 w-full max-w-sm sm:max-w-md animate-fade-in-up">
+        <h1 className="text-xl sm:text-2xl font-semibold text-green-600 text-center mb-2 animate-fade-in">Tạo tài khoản</h1>
+        <div className="w-10 sm:w-12 h-0.5 bg-black mx-auto mb-6 sm:mb-8 animate-grow"></div>
 
-  <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {error && (
             <div className="text-red-600 text-center font-medium animate-fade-in mb-2">{error}</div>
           )}
@@ -116,12 +116,12 @@ export default function SignupForm() {
             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 mt-5 sm:mt-6 shadow-md hover:shadow-xl transform hover:-translate-y-1 active:scale-95 animate-pop disabled:opacity-60 text-base sm:text-lg"
             disabled={loading}
           >
-              {loading ? <LiquidLoading /> : "ĐĂNG KÝ"}
+            {loading ? <LiquidLoading /> : "ĐĂNG KÝ"}
           </button>
         </form>
 
         {/* Login Link */}
-  <div className="text-center mt-4 sm:mt-6 animate-fade-in text-xs sm:text-sm">
+        <div className="text-center mt-4 sm:mt-6 animate-fade-in text-xs sm:text-sm">
           <span className="text-gray-600">Bạn đã có tài khoản ? </span>
           <button
             type="button"

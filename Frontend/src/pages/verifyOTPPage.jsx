@@ -65,8 +65,8 @@ const EmailVerification = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 w-full max-w-sm sm:max-w-md animate-fade-in-up">
+    <div className="flex items-center justify-center p-2 sm:p-4">
+      <div className="rounded-[10px] bg-white shadow-[6px_6px_30px_0_rgba(0,0,0,0.25)] p-4 sm:p-8 w-full max-w-sm sm:max-w-md animate-fade-in-up">
         {error && (
           <div className="text-red-600 text-center font-medium animate-fade-in mb-2">{error}</div>
         )}

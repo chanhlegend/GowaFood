@@ -7,16 +7,18 @@ const LoginPage = React.lazy(() => import("../pages/loginPage"));
 const VerifyPage = React.lazy(() => import("../pages/verifyOTPPage"));
 
 // Product
-const CreateProductPage = React.lazy(() => import("../pages/createProductPage"));
+const CreateProductPage = React.lazy(() =>
+  import("../pages/createProductPage")
+);
 
 // Cấu hình route
 const AppRoute = [
   // Auth
-  { path: ROUTE_PATH.REGISTER, page: RegisterPage},
-  { path: ROUTE_PATH.LOGIN, page: LoginPage , layout: MainLayout},
-  { path: ROUTE_PATH.VERIFY, page: VerifyPage, layout: MainLayout},
+  { path: ROUTE_PATH.REGISTER, page: RegisterPage, layout: MainLayout },
+  { path: ROUTE_PATH.LOGIN, page: LoginPage, layout: MainLayout },
+  { path: ROUTE_PATH.VERIFY, page: VerifyPage, layout: MainLayout },
   // Product
-  { path: ROUTE_PATH.CREATE_PRODUCT, page: CreateProductPage},
-]
+  { path: ROUTE_PATH.CREATE_PRODUCT, page: CreateProductPage },
+];
 
 export default AppRoute;
