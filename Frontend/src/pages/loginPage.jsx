@@ -1,4 +1,5 @@
 import { useState } from "react"
+import LiquidLoading from "../components/ui/LiquidLoading"
 import { useNavigate } from "react-router-dom"
 import { UserService } from "../services/authenService"
 import { ROUTE_PATH } from "../constants/routePath"
@@ -23,7 +24,7 @@ const LoginForm = () => {
     try {
       const user = await UserService.login({ email, password });
       // Lưu user vào localStorage
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("user_gowa", JSON.stringify(user.user));
   toast.success("Đăng nhập thành công!");
       setTimeout(() => {
         appNavigate(ROUTE_PATH.HOME);
@@ -82,9 +83,9 @@ const LoginForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 mt-5 sm:mt-6 shadow-md hover:shadow-xl transform hover:-translate-y-1 active:scale-95 animate-pop disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 mt-5 sm:mt-6 shadow-md hover:shadow-xl transform hover:-translate-y-1 active:scale-95 animate-pop disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg flex items-center justify-center"
           >
-            {loading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP"}
+            {loading ? <LiquidLoading /> : "ĐĂNG NHẬP"}
           </button>
         </form>
 

@@ -1,0 +1,32 @@
+.liquid-btn-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  width: 32px;
+}
+.liquid {
+  animation: liquid-bounce 1.5s infinite cubic-bezier(.68,-0.55,.27,1.55);
+}
+.liquid-wave {
+  animation: liquid-wave 2s infinite linear;
+}
+@keyframes liquid-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px) scaleY(1.05);
+  }
+}
+@keyframes liquid-wave {
+  0% {
+    transform: translateY(0) scaleX(1);
+  }
+  50% {
+    transform: translateY(-4px) scaleX(1.05);
+  }
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+}

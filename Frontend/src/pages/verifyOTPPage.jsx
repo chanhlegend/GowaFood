@@ -1,4 +1,5 @@
 import { useState, useRef } from "react"
+import LiquidLoading from "../components/ui/LiquidLoading"
 import { useLocation, useNavigate } from "react-router-dom"
 import { UserService } from "../services/authenService"
 import "./css/verifyOTPPage.css"
@@ -99,10 +100,10 @@ const EmailVerification = () => {
         <div className="text-center mb-4 sm:mb-6">
           <button
             onClick={handleVerify}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 animate-pop disabled:opacity-60 text-base sm:text-lg"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 animate-pop disabled:opacity-60 text-base sm:text-lg flex items-center justify-center"
             disabled={loading}
           >
-            {loading ? "Đang xác thực..." : "XÁC THỰC"}
+            {loading ? <LiquidLoading /> : "XÁC THỰC"}
           </button>
         </div>
 
