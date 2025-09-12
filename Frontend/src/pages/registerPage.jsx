@@ -1,4 +1,5 @@
 import { useState } from "react"
+import LiquidLoading from "../components/ui/LiquidLoading"
 import { useNavigate } from "react-router-dom"
 import { UserService } from "../services/authenService"
 import "./css/registerPage.css"
@@ -115,7 +116,7 @@ export default function SignupForm() {
             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 mt-5 sm:mt-6 shadow-md hover:shadow-xl transform hover:-translate-y-1 active:scale-95 animate-pop disabled:opacity-60 text-base sm:text-lg"
             disabled={loading}
           >
-            {loading ? "Đang đăng ký..." : "ĐĂNG KÝ"}
+              {loading ? <LiquidLoading /> : "ĐĂNG KÝ"}
           </button>
         </form>
 
