@@ -84,8 +84,6 @@ export default function SignupForm() {
             />
           </div>
 
-          {/* ...existing code... */}
-
           {/* Password Input */}
           <div className="transition-transform duration-300 hover:scale-105">
             <input
