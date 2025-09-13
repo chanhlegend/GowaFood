@@ -31,5 +31,45 @@ export const UserService = {
         } catch (error) {
             throw error.response ? error.response.data : new Error("Network Error");
         }
+    },
+
+    // Thêm địa chỉ mới
+    addAddress: async (userId, addressData) => {
+        try {
+            const response = await axios.post(`${API_URL}/${userId}/addresses`, addressData);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error("Network Error");
+        }
+    },
+
+    // Cập nhật địa chỉ
+    updateAddress: async (userId, addressId, addressData) => {
+        try {
+            const response = await axios.put(`${API_URL}/${userId}/addresses/${addressId}`, addressData);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error("Network Error");
+        }
+    },
+
+    // Xóa địa chỉ
+    deleteAddress: async (userId, addressId) => {
+        try {
+            const response = await axios.delete(`${API_URL}/${userId}/addresses/${addressId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error("Network Error");
+        }
+    },
+
+    // Đặt địa chỉ mặc định
+    setDefaultAddress: async (userId, addressId) => {
+        try {
+            const response = await axios.put(`${API_URL}/${userId}/addresses/${addressId}/default`);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error("Network Error");
+        }
     }
 };
