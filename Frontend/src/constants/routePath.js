@@ -11,5 +11,9 @@ export const ROUTE_PATH = {
   // Product
   CREATE_PRODUCT: '/create-product',
 
+  // User
+  PROFILE: '/profile',
+  ADDRESS_MANAGE: '/address-manage',
+
 
 };
