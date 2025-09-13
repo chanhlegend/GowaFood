@@ -9,6 +9,8 @@ const AddressManagement = () => {
   const [error, setError] = useState(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingAddress, setEditingAddress] = useState(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [addressToDelete, setAddressToDelete] = useState(null)
 
   // Lấy thông tin user từ localStorage
   useEffect(() => {
@@ -49,18 +51,32 @@ const AddressManagement = () => {
     }
   }
 
+  // Hàm mở modal xác nhận xóa
+  const handleOpenDeleteModal = (address) => {
+    setAddressToDelete(address)
+    setShowDeleteModal(true)
+  }
+
+  // Hàm đóng modal xóa
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false)
+    setAddressToDelete(null)
+  }
+
   // Hàm xử lý xóa địa chỉ
-  const handleDeleteAddress = async (addressId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) {
-      try {
-        await UserService.deleteAddress(user._id, addressId)
-        // Cập nhật lại danh sách địa chỉ
-        const userInfo = await UserService.getUserInfo(user._id)
-        setAddresses(userInfo.addresses || [])
-      } catch (err) {
-        setError('Không thể xóa địa chỉ')
-        console.error('Error deleting address:', err)
-      }
+  const handleDeleteAddress = async () => {
+    if (!addressToDelete) return
+    
+    try {
+      await UserService.deleteAddress(user._id, addressToDelete._id)
+      // Cập nhật lại danh sách địa chỉ
+      const userInfo = await UserService.getUserInfo(user._id)
+      setAddresses(userInfo.addresses || [])
+      // Đóng modal
+      handleCloseDeleteModal()
+    } catch (err) {
+      setError('Không thể xóa địa chỉ')
+      console.error('Error deleting address:', err)
     }
   }
 
@@ -140,236 +156,309 @@ const AddressManagement = () => {
   }
 
   return (
-    <div className="flex">
-      {/* Main Content */}
-      <div className="flex-1 p-8">
-        <div className="max-w-4xl">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold text-gray-800">THÔNG TIN ĐỊA CHỈ</h1>
-            <button 
-              onClick={handleAddAddress}
-              className="px-4 py-2 bg-white border-2 border-green-500 text-green-600 rounded-lg hover:bg-green-50 transition-colors font-medium"
-            >
-              + Thêm địa chỉ
-            </button>
-          </div>
-
-          {/* Address Cards */}
-          <div className="space-y-4">
-            {addresses.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>Bạn chưa có địa chỉ nào. Hãy thêm địa chỉ đầu tiên!</p>
-              </div>
-            ) : (
-              addresses.map((address) => (
-                <div key={address._id} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                  {/* Card Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="font-semibold text-gray-800">{address.name}</h3>
-                      {address.isDefault && (
-                        <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">Địa chỉ mặc định</span>
-                      )}
-                      {!address.isDefault && (
-                        <button 
-                          onClick={() => handleSetDefault(address._id)}
-                          className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full hover:bg-green-200 transition-colors"
-                        >
-                          Đặt làm địa chỉ mặc định
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => handleEditAddress(address)}
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Chỉnh sửa"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteAddress(address._id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Xóa"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Address Details */}
-                  <div className="space-y-2">
-                    <p className="text-gray-800 font-medium">{address.name}</p>
-                    <p className="text-gray-600">Số điện thoại: {address.phone}</p>
-                    <p className="text-gray-600">{address.address}</p>
-                    <p className="text-gray-600">{address.ward}, {address.city}</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Add/Edit Address Form Inline */}
-          {showAddForm && (
-            <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-800">
-                  {editingAddress ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowAddForm(false)
-                    setEditingAddress(null)
-                    setError(null)
-                  }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+    <div className="bg-gray-50 px-3 py-4 sm:p-4 lg:p-6">
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm">
+        <div className="flex flex-col lg:flex-row">
+          {/* Main Content */}
+          <div className="flex-1 p-4 sm:p-6 lg:p-8">
+            <div className="max-w-4xl">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">
+                  THÔNG TIN ĐỊA CHỈ
+                </h1>
+                <button 
+                  onClick={handleAddAddress}
+                  className="px-4 py-2 bg-white border-2 border-green-500 text-green-600 rounded-lg hover:bg-green-50 transition-colors font-medium text-sm sm:text-base w-full sm:w-auto"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  + Thêm địa chỉ
+                </button>
+              </div>
+
+              {/* Address Cards */}
+              <div className="space-y-4">
+                {addresses.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm sm:text-base">Bạn chưa có địa chỉ nào. Hãy thêm địa chỉ đầu tiên!</p>
+                  </div>
+                ) : (
+                  addresses.map((address) => (
+                    <div key={address._id} className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm">
+                      {/* Card Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                          <h3 className="font-semibold text-gray-800 text-sm sm:text-base">{address.name}</h3>
+                          {address.isDefault && (
+                            <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 text-xs sm:text-sm rounded-full w-fit">
+                              Địa chỉ mặc định
+                            </span>
+                          )}
+                          {!address.isDefault && (
+                            <button 
+                              onClick={() => handleSetDefault(address._id)}
+                              className="px-2 sm:px-3 py-1 bg-green-100 text-green-700 text-xs sm:text-sm rounded-full hover:bg-green-200 transition-colors w-fit"
+                            >
+                              Đặt làm địa chỉ mặc định
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            onClick={() => handleEditAddress(address)}
+                            className="p-2 text-gray-400 hover:text-blue-600 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            title="Chỉnh sửa"
+                          >
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                          <button 
+                            onClick={() => handleOpenDeleteModal(address)}
+                            className="p-2 text-gray-400 hover:text-red-600 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            title="Xóa"
+                          >
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Address Details */}
+                      <div className="space-y-2">
+                        <p className="text-gray-800 font-medium text-sm sm:text-base">{address.name}</p>
+                        <p className="text-gray-600 text-sm sm:text-base">Số điện thoại: {address.phone}</p>
+                        <p className="text-gray-600 text-sm sm:text-base break-words">{address.address}</p>
+                        <p className="text-gray-600 text-sm sm:text-base">{address.ward}, {address.city}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Add/Edit Address Form Inline */}
+              {showAddForm && (
+                <div className="mt-6 sm:mt-8 bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+                      {editingAddress ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setShowAddForm(false)
+                        setEditingAddress(null)
+                        setError(null)
+                      }}
+                      className="text-gray-400 hover:text-gray-600 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    >
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+              
+                  {/* Hiển thị lỗi nếu có */}
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm sm:text-base">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <form onSubmit={(e) => {
+                    e.preventDefault()
+                    const formData = new FormData(e.target)
+                    const data = {
+                      name: formData.get('name')?.trim(),
+                      phone: formData.get('phone')?.trim(),
+                      address: formData.get('address')?.trim(),
+                      ward: formData.get('ward')?.trim(),
+                      city: formData.get('city')?.trim(),
+                      isDefault: formData.get('isDefault') === 'on'
+                    }
+                    handleSubmitForm(data)
+                  }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tên người nhận
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          defaultValue={editingAddress?.name || ''}
+                          required
+                          className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Số điện thoại
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          defaultValue={editingAddress?.phone || ''}
+                          required
+                          className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Địa chỉ chi tiết
+                        </label>
+                        <input
+                          type="text"
+                          name="address"
+                          defaultValue={editingAddress?.address || ''}
+                          required
+                          className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Xã/Phường
+                        </label>
+                        <input
+                          type="text"
+                          name="ward"
+                          defaultValue={editingAddress?.ward || ''}
+                          required
+                          className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Thành phố/Tỉnh
+                        </label>
+                        <input
+                          type="text"
+                          name="city"
+                          defaultValue={editingAddress?.city || ''}
+                          required
+                          className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="isDefault"
+                            defaultChecked={editingAddress?.isDefault || false}
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                          />
+                          <label className="ml-2 block text-sm text-gray-700">
+                            Đặt làm địa chỉ mặc định
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddForm(false)
+                          setEditingAddress(null)
+                          setError(null)
+                        }}
+                        className="px-6 py-2 text-sm sm:text-base text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors min-h-[48px] order-2 sm:order-1"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2 text-sm sm:text-base bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors min-h-[48px] order-1 sm:order-2"
+                      >
+                        {editingAddress ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 transition-opacity duration-300">
+          {/* Overlay */}
+          <div 
+            className="absolute inset-0 bg-black/50 transition-opacity duration-300"
+            onClick={handleCloseDeleteModal}
+          />
+          
+          {/* Modal */}
+          <div className="relative flex items-center justify-center min-h-screen p-4">
+            <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Xác nhận xóa địa chỉ
+                </h3>
+                <button
+                  onClick={handleCloseDeleteModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              
-              {/* Hiển thị lỗi nếu có */}
-              {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  {error}
-                </div>
-              )}
-              
-              <form onSubmit={(e) => {
-                e.preventDefault()
-                const formData = new FormData(e.target)
-                const data = {
-                  name: formData.get('name')?.trim(),
-                  phone: formData.get('phone')?.trim(),
-                  address: formData.get('address')?.trim(),
-                  ward: formData.get('ward')?.trim(),
-                  city: formData.get('city')?.trim(),
-                  isDefault: formData.get('isDefault') === 'on'
-                }
-                handleSubmitForm(data)
-              }}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tên người nhận
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      defaultValue={editingAddress?.name || ''}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Số điện thoại
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      defaultValue={editingAddress?.phone || ''}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
+              {/* Modal Content */}
+              <div className="mb-6">
+                <p className="text-gray-600 mb-4">
+                  Bạn có chắc chắn muốn xóa địa chỉ này không?
+                </p>
+                {addressToDelete && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="font-medium text-gray-800">{addressToDelete.name}</p>
+                    <p className="text-sm text-gray-600">{addressToDelete.phone}</p>
+                    <p className="text-sm text-gray-600">{addressToDelete.address}</p>
+                    <p className="text-sm text-gray-600">{addressToDelete.ward}, {addressToDelete.city}</p>
                   </div>
+                )}
+                <p className="text-sm text-red-600 mt-3">
+                  Hành động này không thể hoàn tác.
+                </p>
+              </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Địa chỉ chi tiết
-                    </label>
-                    <input
-                      type="text"
-                      name="address"
-                      defaultValue={editingAddress?.address || ''}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Xã/Phường
-                    </label>
-                    <input
-                      type="text"
-                      name="ward"
-                      defaultValue={editingAddress?.ward || ''}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Thành phố/Tỉnh
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      defaultValue={editingAddress?.city || ''}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="isDefault"
-                        defaultChecked={editingAddress?.isDefault || false}
-                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                      />
-                      <label className="ml-2 block text-sm text-gray-700">
-                        Đặt làm địa chỉ mặc định
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddForm(false)
-                      setEditingAddress(null)
-                      setError(null)
-                    }}
-                    className="px-6 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    {editingAddress ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ'}
-                  </button>
-                </div>
-              </form>
+              {/* Modal Actions */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                <button
+                  onClick={handleCloseDeleteModal}
+                  className="px-6 py-2 text-sm sm:text-base text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors min-h-[48px] order-2 sm:order-1"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleDeleteAddress}
+                  className="px-6 py-2 text-sm sm:text-base bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors min-h-[48px] order-1 sm:order-2"
+                >
+                  Xóa địa chỉ
+                </button>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
