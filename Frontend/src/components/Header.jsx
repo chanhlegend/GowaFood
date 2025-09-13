@@ -1,8 +1,8 @@
 // src/components/Header.jsx
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, User, ShoppingCart, Phone, X } from "lucide-react"
+import { Menu, User, ShoppingCart, Phone, X, LogOut, UserCircle, LogIn } from "lucide-react"
 import Logo from "../assets/images/logo.png"
 
 const navigationItems = [
@@ -17,6 +17,9 @@ const navigationItems = [
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const userDropdownRef = useRef(null)
 
   // lock scroll khi mở menu mobile
   useEffect(() => {
@@ -29,6 +32,44 @@ export function Header() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Kiểm tra trạng thái đăng nhập từ localStorage
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const userData = localStorage.getItem('user_gowa')
+      setIsLoggedIn(!!userData)
+    }
+
+    checkAuthStatus()
+
+    // Lắng nghe sự kiện storage để cập nhật khi có thay đổi
+    const handleStorageChange = () => {
+      checkAuthStatus()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [])
+
+  // Xử lý click outside để đóng dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false)
+      }
+    }
+
+    if (isUserDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isUserDropdownOpen])
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -104,43 +145,107 @@ export function Header() {
 
               {/* Right side icons */}
               <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-                {/* User Account */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="
-                    relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
-                    transition-all duration-300 ease-in-out
-                    focus:ring-2 focus:ring-green-600 focus:ring-offset-2
-                  "
-                >
-                  <User className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
-                  <span className="sr-only">Tài khoản</span>
-                </Button>
+                {isLoggedIn ? (
+                  <>
+                    {/* User Account Dropdown */}
+                    <div className="relative" ref={userDropdownRef}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                        className="
+                          relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
+                          transition-all duration-300 ease-in-out
+                          focus:ring-2 focus:ring-green-600 focus:ring-offset-2
+                        "
+                      >
+                        <User className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                        <span className="sr-only">Tài khoản</span>
+                      </Button>
 
-                {/* Shopping Cart */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="
-                    relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
-                    transition-all duration-300 ease-in-out
-                    focus:ring-2 focus:ring-green-600 focus:ring-offset-2
-                  "
-                >
-                  <ShoppingCart className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
-                  <div
+                      {/* Dropdown Menu */}
+                      {isUserDropdownOpen && (
+                        <div className="
+                          absolute right-0 top-full mt-2 w-48
+                          bg-white border border-gray-200 rounded-lg shadow-lg
+                          py-2 z-50
+                          animate-in slide-in-from-top-2 duration-200
+                        ">
+                          <a
+                            href="/profile"
+                            className="
+                              flex items-center gap-3 px-4 py-3 text-sm text-gray-700
+                              hover:bg-gray-50 hover:text-green-700
+                              transition-colors duration-200
+                            "
+                            onClick={() => setIsUserDropdownOpen(false)}
+                          >
+                            <UserCircle className="h-4 w-4" />
+                            Hồ sơ cá nhân
+                          </a>
+                          <button
+                            className="
+                              w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700
+                              hover:bg-gray-50 hover:text-red-600
+                              transition-colors duration-200
+                            "
+                            onClick={() => {
+                              setIsUserDropdownOpen(false)
+                              // Thêm logic đăng xuất ở đây
+                              localStorage.removeItem('user_gowa')
+                              setIsLoggedIn(false)
+                            }}
+                          >
+                            <LogOut className="h-4 w-4" />
+                            Đăng xuất
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Shopping Cart */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="
+                        relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
+                        transition-all duration-300 ease-in-out
+                        focus:ring-2 focus:ring-green-600 focus:ring-offset-2
+                      "
+                    >
+                      <ShoppingCart className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                      <div
+                        className="
+                          absolute -top-2 -right-2 bg-green-700 text-white
+                          text-[10px] sm:text-xs rounded-full
+                          h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center
+                          animate-pulse
+                        "
+                      >
+                        0
+                      </div>
+                      <span className="sr-only">Giỏ hàng</span>
+                    </Button>
+                  </>
+                ) : (
+                  /* Login Icon */
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="
-                      absolute -top-2 -right-2 bg-green-700 text-white
-                      text-[10px] sm:text-xs rounded-full
-                      h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center
-                      animate-pulse
+                      relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
+                      transition-all duration-300 ease-in-out
+                      focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                     "
+                    onClick={() => {
+                      // Chuyển đến trang login
+                      window.location.href = '/login'
+                    }}
                   >
-                    0
-                  </div>
-                  <span className="sr-only">Giỏ hàng</span>
-                </Button>
+                    <LogIn className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                    <span className="sr-only">Đăng nhập</span>
+                  </Button>
+                )}
 
                 {/* Mobile Menu Button */}
                 <Button
