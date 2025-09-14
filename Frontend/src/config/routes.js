@@ -16,6 +16,7 @@ const CreateProductPage = React.lazy(() =>
 
 //site
 const HomePage = React.lazy(() => import("../pages/homePage"));
+const FoodByCategoryPage = React.lazy(() => import("../pages/foodByCategoryPage"));
 
 // Cấu hình route
 const AppRoute = [
@@ -32,6 +33,7 @@ const AppRoute = [
 
   // Site
   { path: ROUTE_PATH.HOME, page: HomePage, layout: MainLayout },
+  { path: ROUTE_PATH.FOOD_BY_CATEGORY, page: FoodByCategoryPage, layout: MainLayout },
 ];
 
 export default AppRoute;
