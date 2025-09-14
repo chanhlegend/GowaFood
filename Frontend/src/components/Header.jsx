@@ -1,75 +1,115 @@
 // src/components/Header.jsx
 
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Menu, User, ShoppingCart, Phone, X, LogOut, UserCircle, LogIn } from "lucide-react"
-import Logo from "../assets/images/logo.png"
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  User,
+  ShoppingCart,
+  Phone,
+  X,
+  LogOut,
+  UserCircle,
+  LogIn,
+} from "lucide-react";
+import Logo from "../assets/images/logo.png";
 
-const navigationItems = [
-  { name: "Trang chủ", href: "#" },
-  { name: "Rau Sạch", href: "#" },
-  { name: "Củ quả", href: "#" },
-  { name: "Nấm Tươi", href: "#" },
-  { name: "Healthy", href: "#" },
-  { name: "Farm", href: "#" },
-]
+import { CategoryService } from "../services/categoryService";
 
 export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const userDropdownRef = useRef(null)
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const userDropdownRef = useRef(null);
+
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await CategoryService.getAllCategories();
+        console.log("Fetched categories:", response);
+        
+        // Giả sử API trả { data: [...] }
+        const cats = Array.isArray(response)
+          ? response
+          : response || [];
+        setCategories(cats);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        setCategories([]); // fallback mảng rỗng
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const navigationItems = [
+    { name: "Trang chủ", href: "/" },
+    ...(Array.isArray(categories)
+      ? categories.map((cat) => ({
+          name: cat.name,
+          href: `/food-by-category/${cat._id}`,
+        }))
+      : []),
+    { name: "Giới thiệu", href: "/aboutus" },
+  ];
 
   // lock scroll khi mở menu mobile
   useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? "hidden" : ""
-    return () => { document.body.style.overflow = "" }
-  }, [isMobileMenuOpen])
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10)
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Kiểm tra trạng thái đăng nhập từ localStorage
   useEffect(() => {
     const checkAuthStatus = () => {
-      const userData = localStorage.getItem('user_gowa')
-      setIsLoggedIn(!!userData)
-    }
+      const userData = localStorage.getItem("user_gowa");
+      setIsLoggedIn(!!userData);
+    };
 
-    checkAuthStatus()
+    checkAuthStatus();
 
     // Lắng nghe sự kiện storage để cập nhật khi có thay đổi
     const handleStorageChange = () => {
-      checkAuthStatus()
-    }
+      checkAuthStatus();
+    };
 
-    window.addEventListener('storage', handleStorageChange)
-    
+    window.addEventListener("storage", handleStorageChange);
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
-    }
-  }, [])
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   // Xử lý click outside để đóng dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
-        setIsUserDropdownOpen(false)
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target)
+      ) {
+        setIsUserDropdownOpen(false);
       }
-    }
+    };
 
     if (isUserDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [isUserDropdownOpen])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isUserDropdownOpen]);
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -78,7 +118,8 @@ export function Header() {
         <div className="container mx-auto flex items-center justify-center gap-1.5 sm:gap-2">
           <Phone className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 " />
           <span className="text-balance text-sm sm:text-base md:text-lg font-medium text-center text-amber-500">
-            Chuyên cung cấp sỉ trau củ quả sạch an toàn - Hotline: 0349 544 688 - 0379 588 499
+            Chuyên cung cấp sỉ trau củ quả sạch an toàn - Hotline: 0349 544 688
+            - 0379 588 499
           </span>
         </div>
       </div>
@@ -152,7 +193,9 @@ export function Header() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                        onClick={() =>
+                          setIsUserDropdownOpen(!isUserDropdownOpen)
+                        }
                         className="
                           relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
                           transition-all duration-300 ease-in-out
@@ -165,12 +208,14 @@ export function Header() {
 
                       {/* Dropdown Menu */}
                       {isUserDropdownOpen && (
-                        <div className="
+                        <div
+                          className="
                           absolute right-0 top-full mt-2 w-48
                           bg-white border border-gray-200 rounded-lg shadow-lg
                           py-2 z-50
                           animate-in slide-in-from-top-2 duration-200
-                        ">
+                        "
+                        >
                           <a
                             href="/profile"
                             className="
@@ -190,10 +235,10 @@ export function Header() {
                               transition-colors duration-200
                             "
                             onClick={() => {
-                              setIsUserDropdownOpen(false)
+                              setIsUserDropdownOpen(false);
                               // Thêm logic đăng xuất ở đây
-                              localStorage.removeItem('user_gowa')
-                              setIsLoggedIn(false)
+                              localStorage.removeItem("user_gowa");
+                              setIsLoggedIn(false);
                             }}
                           >
                             <LogOut className="h-4 w-4" />
@@ -239,7 +284,7 @@ export function Header() {
                     "
                     onClick={() => {
                       // Chuyển đến trang login
-                      window.location.href = '/login'
+                      window.location.href = "/login";
                     }}
                   >
                     <LogIn className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
@@ -267,7 +312,11 @@ export function Header() {
       <div
         className={`
           fixed inset-0 z-50 transition-opacity duration-300
-          ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
+          ${
+            isMobileMenuOpen
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          }
         `}
         aria-hidden={!isMobileMenuOpen}
       >
@@ -308,8 +357,12 @@ export function Header() {
               className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover"
             />
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-green-700">GOWA Food</h2>
-              <p className="text-sm sm:text-base text-green-800">Thực phẩm sạch</p>
+              <h2 className="text-lg sm:text-xl font-bold text-green-700">
+                GOWA Food
+              </h2>
+              <p className="text-sm sm:text-base text-green-800">
+                Thực phẩm sạch
+              </p>
             </div>
           </div>
 
@@ -333,7 +386,7 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }
 
-export default Header
+export default Header;

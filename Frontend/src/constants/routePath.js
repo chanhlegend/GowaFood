@@ -6,6 +6,7 @@ export const ROUTE_PATH = {
 
   // Public
   HOME: '/',
+  FOOD_BY_CATEGORY: '/food-by-category/:categoryId',
   ABOUT_US: '/aboutus',
 
   // Product
