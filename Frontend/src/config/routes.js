@@ -8,7 +8,7 @@ const LoginPage = React.lazy(() => import("../pages/loginPage"));
 const VerifyPage = React.lazy(() => import("../pages/verifyOTPPage"));
 const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
 const AddressManagePage = React.lazy(() => import("../pages/addressManagePage"));
-
+const ProductDetailPage = React.lazy(() => import("../pages/productDetailPage"));
 // Product
 const CreateProductPage = React.lazy(() =>
   import("../pages/createProductPage")
@@ -22,6 +22,7 @@ const AppRoute = [
   { path: ROUTE_PATH.VERIFY, page: VerifyPage, layout: MainLayout },
   // Product
   { path: ROUTE_PATH.CREATE_PRODUCT, page: CreateProductPage },
+  { path: ROUTE_PATH.PRODUCT_DETAIL, page: ProductDetailPage, layout: MainLayout },
   // User
   { path: ROUTE_PATH.PROFILE, page: ProfilePage, layout: ProfileLayout },
   { path: ROUTE_PATH.ADDRESS_MANAGE, page: AddressManagePage, layout: ProfileLayout },
