@@ -15,6 +15,7 @@ import {
 import Logo from "../assets/images/logo.png";
 
 import { CategoryService } from "../services/categoryService";
+import { href } from "react-router-dom";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -30,7 +31,7 @@ export function Header() {
       try {
         const response = await CategoryService.getAllCategories();
         console.log("Fetched categories:", response);
-        
+
         // Giả sử API trả { data: [...] }
         const cats = Array.isArray(response)
           ? response
@@ -49,10 +50,11 @@ export function Header() {
     { name: "Trang chủ", href: "/" },
     ...(Array.isArray(categories)
       ? categories.map((cat) => ({
-          name: cat.name,
-          href: `/food-by-category/${cat._id}`,
-        }))
+        name: cat.name,
+        href: `/food-by-category/${cat._id}`,
+      }))
       : []),
+    { name: "Công thức AI", href: "/chat-recipe-ai" },
     { name: "Giới thiệu", href: "/aboutus" },
   ];
 
@@ -315,19 +317,17 @@ export function Header() {
       <div
         className={`
           fixed inset-0 z-50 transition-opacity duration-300
-          ${
-            isMobileMenuOpen
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
+          ${isMobileMenuOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
           }
         `}
         aria-hidden={!isMobileMenuOpen}
       >
         {/* Overlay */}
         <div
-          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
-            isMobileMenuOpen ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"
+            }`}
           onClick={() => setIsMobileMenuOpen(false)}
         />
 

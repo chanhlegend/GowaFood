@@ -59,7 +59,7 @@ const AIFoodSuggestion = () => {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen flex items-center justify-center p-2 sm:p-4">
+    <div className="bg-gray-50 flex items-center justify-center p-2 sm:p-4">
       <div className="w-full max-w-2xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8 sm:mb-12">
