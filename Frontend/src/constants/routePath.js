@@ -10,7 +10,7 @@ export const ROUTE_PATH = {
 
   // Product
   CREATE_PRODUCT: '/create-product',
-
+  PRODUCT_DETAIL: '/product/:id',
   // User
   PROFILE: '/profile',
   ADDRESS_MANAGE: '/address-manage',

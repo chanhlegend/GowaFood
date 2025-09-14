@@ -8,4 +8,6 @@ router.get('/', ProductController.getAllProducts);
 // Tạo sản phẩm mới
 router.post('/', ProductController.createProduct);
 
+// Lấy sản phẩm theo ID
+router.get('/:id', ProductController.getProductById);
 module.exports = router;
