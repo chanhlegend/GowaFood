@@ -7,6 +7,7 @@ const OrderSchema = new mongoose.Schema({
     quantity: Number,
     price: Number
   }],
+  endowment: Number,
   total: Number,
   status: { type: String, enum: ['pending', 'paid', 'cancelled', 'completed'], default: 'pending' },
   paymentMethod: { type: String, enum: ['bank', 'cod'] },

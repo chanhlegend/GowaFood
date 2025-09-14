@@ -31,6 +31,22 @@ class ProductController {
 		}
 	}
 
+	async getProductById(req, res) {
+    try {
+      const { id } = req.params;
+      const product = await Product.findById(id)
+        .populate('category');
+
+      if (!product) {
+        return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+      }
+
+      res.status(200).json(product);
+    } catch (err) {
+      res.status(500).json({ message: 'Lỗi server', error: err.message });
+    }
+  }
+
 	// lấy product theo category
 	async getProductsByCategory(req, res) {
 		try {

@@ -11,4 +11,6 @@ router.post('/', ProductController.createProduct);
 // Lấy sản phẩm theo category
 router.get('/category/:categoryId', ProductController.getProductsByCategory);
 
+// Lấy sản phẩm theo ID
+router.get('/:id', ProductController.getProductById);
 module.exports = router;
