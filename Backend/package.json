@@ -33,6 +33,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "react-markdown": "^10.1.0",
+    "translate-google": "^1.5.0",
     "xlsx": "^0.18.5"
   }
 }
