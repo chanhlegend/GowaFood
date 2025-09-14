@@ -22,4 +22,24 @@ export const ProductService = {
             throw error.response ? error.response.data : new Error("Network Error");
         }
     },
+
+    // Lấy sản phẩm theo category
+    getProductsByCategory: async (categoryId) => {
+        try {
+            const response = await axios.get(`${API_URL}/category/${categoryId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error("Network Error");
+        }
+    },
+
+    // Lấy sản phẩm theo ID
+    getProductById: async (id) => {
+        try {
+            const response = await axios.get(`${API_URL}/${id}`);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error("Network Error");
+        }
+    }
 };
