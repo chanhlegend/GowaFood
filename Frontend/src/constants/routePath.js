@@ -16,5 +16,8 @@ export const ROUTE_PATH = {
   PROFILE: '/profile',
   ADDRESS_MANAGE: '/address-manage',
 
+  // RecipeAI
+  CHAT_RECIPE_AI: '/chat-recipe-ai',
+
 
 };

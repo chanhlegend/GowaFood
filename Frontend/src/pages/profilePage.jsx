@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Edit2, Save, X } from "lucide-react"
 import { UserService } from "../services/userService"
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 
@@ -83,73 +84,79 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="bg-gray-50 px-3 py-4 sm:p-4 lg:p-6">
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-sm">
-        <div className="flex">
+        <div className="flex flex-col lg:flex-row">
           {/* Main Content */}
-          <div className="flex-1 p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-2xl font-bold text-gray-800">
+          <div className="flex-1 p-4 sm:p-6 lg:p-8">
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">
                 THÔNG TIN TÀI KHOẢN
               </h1>
             </div>
 
             {/* Account Information Form */}
-            <div className="space-y-6 max-w-2xl">
+            <div className="space-y-6 sm:space-y-6 w-full max-w-2xl">
               {/* Full Name */}
-              <div className="flex items-center">
-                <label className="w-32 text-gray-700 font-medium">Họ tên:</label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-0">
+                <label className="w-full sm:w-32 text-gray-700 font-medium text-base sm:text-base">Họ tên:</label>
                 <div className="flex-1 flex items-center justify-between">
                   {isEditingName ? (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3 w-full">
                       <input
                         type="text"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        className="flex-1 px-2 py-1 border border-gray-300 rounded"
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Nhập họ tên"
+                        autoFocus
                       />
                       <button
                         onClick={handleSaveName}
-                        className="text-green-600 hover:text-green-800"
+                        className="text-green-600 hover:text-green-800 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                       >
-                        <Save className="w-4 h-4" />
+                        <Save className="w-5 h-5" />
                       </button>
                       <button
                         onClick={handleCancelEdit}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-red-600 hover:text-red-800 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
                   ) : (
                     <>
-                      <span className="text-gray-800">
+                      <span className="text-gray-800 text-base flex-1">
                         {User?.name || "Loading..."}
                       </span>
-                      <Edit2
-                        className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600"
+                      <button
                         onClick={handleEditName}
-                      />
+                        className="text-gray-400 hover:text-gray-600 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                      >
+                        <Edit2 className="w-5 h-5" />
+                      </button>
                     </>
                   )}
                 </div>
               </div>
 
               {/* Email */}
-              <div className="flex items-center">
-                <label className="w-32 text-gray-700 font-medium">Email:</label>
-                <span className="text-gray-800">{User?.email || "Loading..."}</span>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-0">
+                <label className="w-full sm:w-32 text-gray-700 font-medium text-base sm:text-base">Email:</label>
+                <span className="text-gray-800 text-base break-all">{User?.email || "Loading..."}</span>
               </div>
 
               {/* Password */}
-              <div className="flex items-center">
-                <label className="w-32 text-gray-700 font-medium">Mật khẩu:</label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-0">
+                <label className="w-full sm:w-32 text-gray-700 font-medium text-base sm:text-base">Mật khẩu:</label>
                 <div className="flex-1 flex items-center justify-between">
-                  <span className="text-gray-800">•••••••</span>
-                  <Edit2
-                    className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600"
+                  <span className="text-gray-800 text-base">•••••••</span>
+                  <button
                     onClick={handleEditPassword}
-                  />
+                    className="text-gray-400 hover:text-gray-600 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
 
@@ -157,7 +164,7 @@ const UserProfile = () => {
               <AnimatePresence>
                 {isModalOpen && (
                   <motion.div
-                    className="bg-gray-50 rounded-lg p-6 border border-gray-200"
+                    className="bg-gray-50 rounded-lg p-5 sm:p-6 border border-gray-200"
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -167,51 +174,54 @@ const UserProfile = () => {
                     <h3 className="text-lg font-semibold mb-4 text-gray-800">Đổi mật khẩu</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Mật khẩu hiện tại
                         </label>
                         <input
                           type="password"
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Nhập mật khẩu hiện tại"
+                          autoComplete="current-password"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Mật khẩu mới
                         </label>
                         <input
                           type="password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Nhập mật khẩu mới"
+                          autoComplete="new-password"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Xác nhận mật khẩu mới
                         </label>
                         <input
                           type="password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Xác nhận mật khẩu mới"
+                          autoComplete="new-password"
                         />
                       </div>
-                      <div className="flex justify-end space-x-3 mt-6">
+                      <div className="flex flex-col gap-3 mt-6 sm:flex-row sm:justify-end sm:gap-3">
                         <button
                           onClick={handleCloseModal}
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors duration-200"
+                          className="px-6 py-3 text-base bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 min-h-[48px] order-2 sm:order-1"
                         >
                           Hủy
                         </button>
                         <button
                           onClick={handleSavePassword}
-                          className="px-4 py-2 text-white rounded-md transition-colors duration-200"
+                          className="px-6 py-3 text-base text-white rounded-lg transition-colors duration-200 min-h-[48px] order-1 sm:order-2"
                           style={{ backgroundColor: '#228B22' }}
                           onMouseEnter={(e) => e.target.style.backgroundColor = '#1e7e1e'}
                           onMouseLeave={(e) => e.target.style.backgroundColor = '#228B22'}

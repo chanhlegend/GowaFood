@@ -236,9 +236,12 @@ export function Header() {
                             "
                             onClick={() => {
                               setIsUserDropdownOpen(false);
-                              // Thêm logic đăng xuất ở đây
+                              // Xóa dữ liệu user khỏi localStorage
                               localStorage.removeItem("user_gowa");
+                              // Cập nhật trạng thái đăng nhập
                               setIsLoggedIn(false);
+                              // Chuyển hướng về trang home
+                              window.location.href = '/'
                             }}
                           >
                             <LogOut className="h-4 w-4" />
@@ -383,6 +386,60 @@ export function Header() {
               </a>
             ))}
           </nav>
+
+          {/* User Actions for Mobile */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            {isLoggedIn ? (
+              <div className="flex flex-col gap-2">
+                <a
+                  href="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="
+                    flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+                    rounded-lg transition-all duration-300 ease-in-out
+                    hover:bg-muted hover:text-green-700 hover:translate-x-2
+                  "
+                >
+                  <UserCircle className="h-5 w-5" />
+                  Hồ sơ cá nhân
+                </a>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false)
+                    // Xóa dữ liệu user khỏi localStorage
+                    localStorage.removeItem('user_gowa')
+                    // Cập nhật trạng thái đăng nhập
+                    setIsLoggedIn(false)
+                    // Chuyển hướng về trang home
+                    window.location.href = '/'
+                  }}
+                  className="
+                    flex items-center gap-3 px-4 py-3 text-base font-semibold text-red-600
+                    rounded-lg transition-all duration-300 ease-in-out
+                    hover:bg-red-50 hover:translate-x-2
+                  "
+                >
+                  <LogOut className="h-5 w-5" />
+                  Đăng xuất
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false)
+                  window.location.href = '/login'
+                }}
+                className="
+                  flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+                  rounded-lg transition-all duration-300 ease-in-out
+                  hover:bg-muted hover:text-green-700 hover:translate-x-2
+                "
+              >
+                <LogIn className="h-5 w-5" />
+                Đăng nhập
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </header>

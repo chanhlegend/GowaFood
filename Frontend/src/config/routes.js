@@ -8,6 +8,7 @@ const LoginPage = React.lazy(() => import("../pages/loginPage"));
 const VerifyPage = React.lazy(() => import("../pages/verifyOTPPage"));
 const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
 const AddressManagePage = React.lazy(() => import("../pages/addressManagePage"));
+const ChatRecipeAIPage = React.lazy(() => import("../pages/chatRecipeAI"));
 const ProductDetailPage = React.lazy(() => import("../pages/productDetailPage"));
 // Product
 const CreateProductPage = React.lazy(() =>
@@ -30,6 +31,8 @@ const AppRoute = [
   // User
   { path: ROUTE_PATH.PROFILE, page: ProfilePage, layout: ProfileLayout },
   { path: ROUTE_PATH.ADDRESS_MANAGE, page: AddressManagePage, layout: ProfileLayout },
+  // RecipeAI
+  { path: ROUTE_PATH.CHAT_RECIPE_AI, page: ChatRecipeAIPage, layout: MainLayout },
 
   // Site
   { path: ROUTE_PATH.HOME, page: HomePage, layout: MainLayout },
