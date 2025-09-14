@@ -14,6 +14,9 @@ const CreateProductPage = React.lazy(() =>
   import("../pages/createProductPage")
 );
 
+//site
+const HomePage = React.lazy(() => import("../pages/homePage"));
+
 // Cấu hình route
 const AppRoute = [
   // Auth
@@ -25,6 +28,9 @@ const AppRoute = [
   // User
   { path: ROUTE_PATH.PROFILE, page: ProfilePage, layout: ProfileLayout },
   { path: ROUTE_PATH.ADDRESS_MANAGE, page: AddressManagePage, layout: ProfileLayout },
+
+  // Site
+  { path: ROUTE_PATH.HOME, page: HomePage, layout: MainLayout },
 ];
 
 export default AppRoute;
