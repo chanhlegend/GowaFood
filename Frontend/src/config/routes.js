@@ -16,7 +16,8 @@ const CreateProductPage = React.lazy(() =>
 
 //site
 const HomePage = React.lazy(() => import("../pages/homePage"));
-
+// Cart
+const CartPage = React.lazy(() => import("../pages/cartPage"));
 // Cấu hình route
 const AppRoute = [
   // Auth
@@ -32,6 +33,9 @@ const AppRoute = [
 
   // Site
   { path: ROUTE_PATH.HOME, page: HomePage, layout: MainLayout },
+
+  // Cart & Checkout
+  { path: ROUTE_PATH.CART, page: CartPage, layout: MainLayout },
 ];
 
 export default AppRoute;
