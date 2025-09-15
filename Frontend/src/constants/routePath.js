@@ -15,6 +15,11 @@ export const ROUTE_PATH = {
   // User
   PROFILE: '/profile',
   ADDRESS_MANAGE: '/address-manage',
+ 
+  // Cart & Checkout
+  CART: "/cart",
+  CHECKOUT: "/checkout",
+  ORDER_SUCCESS: "/order-success",
 
   // RecipeAI
   CHAT_RECIPE_AI: '/chat-recipe-ai',

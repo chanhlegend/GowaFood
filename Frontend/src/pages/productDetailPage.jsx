@@ -1,9 +1,10 @@
 // src/pages/productDetailPage.jsx
-import { useEffect, useMemo, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { Minus, Plus, ShoppingCart, Heart, Star, ArrowLeft, QrCode } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ProductService } from "@/services/ProductService"
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Minus, Plus, ShoppingCart, Heart, Star, ArrowLeft, QrCode, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ProductService } from "@/services/ProductService";
+import { CartService } from "@/services/CartService"; // <-- thêm
 
 const QR_STATIC = {
   farmName: "Suni Green Farm",
@@ -11,63 +12,86 @@ const QR_STATIC = {
   harvestDate: "15/12/2024",
   certs: "VietGAP, Hữu cơ",
   image: "/qr-celery.png",
-}
+};
 
 const relatedProducts = [
   { id: 1, name: "Cải Kale Mỹ", price: "100,000", originalPrice: "120,000", image: "/placeholder-4d4pe.png", badge: "Hết hàng" },
   { id: 2, name: "Cải Bó Xôi Thủy Canh Việt Gap", price: "69,000", image: "/fresh-spinach.png", badge: null },
   { id: 3, name: "Cải bó xôi nhỏ cơ", price: "108,000", image: "/placeholder-7bzjs.png", badge: null },
   { id: 4, name: "Cà rốt mini", price: "129,000", image: "/placeholder-gvk5a.png", badge: null },
-]
+];
 
 const viewedProducts = [
   { id: 101, name: "Cần tây", price: "109,000", originalPrice: "130,000", image: "/placeholder-m3uww.png", badge: "Sale" },
   { id: 102, name: "Nấm đùi gà", price: "195,000", image: "/placeholder-mia65.png", badge: null },
-]
+];
 
 function makeSeededGrid(count, seed = 98765) {
-  let x = seed >>> 0, out = []
+  let x = seed >>> 0, out = [];
   for (let i = 0; i < count; i++) {
-    x = (1103515245 * x + 12345) % 2147483648
-    out.push((x & 1) === 1)
+    x = (1103515245 * x + 12345) % 2147483648;
+    out.push((x & 1) === 1);
   }
-  return out
+  return out;
 }
 
 export default function ProductDetailPage() {
-  const navigate = useNavigate()
-  const { id: productId } = useParams()
+  const navigate = useNavigate();
+  const { id: productId } = useParams();
 
-  const [selectedImage, setSelectedImage] = useState(0)
-  const [quantity, setQuantity] = useState(1)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [showQRCode, setShowQRCode] = useState(false)
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [product, setProduct] = useState(null)
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);         // trạng thái gọi API add to cart
+  const [added, setAdded] = useState(false);           // feedback đã thêm
+  const [error, setError] = useState("");
+  const [product, setProduct] = useState(null);
 
-  const qrDots = useMemo(() => makeSeededGrid(8 * 8), [])
+  const qrDots = useMemo(() => makeSeededGrid(8 * 8), []);
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
     async function load() {
       try {
-        setLoading(true)
-        setError("")
-        const data = await ProductService.getProductById(productId)
-        if (!mounted) return
-        setProduct(data)
+        setLoading(true);
+        setError("");
+        const data = await ProductService.getProductById(productId);
+        if (!mounted) return;
+        setProduct(data);
+        // reset trạng thái khi thay đổi sản phẩm
+        setQuantity(1);
+        setAdded(false);
       } catch (e) {
-        if (!mounted) return
-        setError(e?.message || "Không thể tải sản phẩm")
+        if (!mounted) return;
+        setError(e?.message || "Không thể tải sản phẩm");
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted) setLoading(false);
       }
     }
-    if (productId) load()
-    return () => { mounted = false }
-  }, [productId])
+    if (productId) load();
+    return () => { mounted = false; };
+  }, [productId]);
+
+  const handleAddToCart = async () => {
+    if (!product?._id) return;
+    if (adding) return;
+    setAdding(true);
+    setAdded(false);
+    try {
+      // Nếu backend chưa auth, có thể truyền userId test ở đây: { userId: "6655..." }
+      await CartService.addItem({ productId: product._id, quantity });
+      setAdded(true);
+      // tự tắt "đã thêm" sau 1.5s
+      setTimeout(() => setAdded(false), 1500);
+    } catch (e) {
+      alert(e?.message || "Thêm vào giỏ thất bại");
+    } finally {
+      setAdding(false);
+    }
+  };
 
   if (!productId) {
     return (
@@ -77,7 +101,7 @@ export default function ProductDetailPage() {
           <Button className="mt-3" onClick={() => navigate("/")}>Về trang chủ</Button>
         </div>
       </div>
-    )
+    );
   }
 
   if (loading) {
@@ -103,7 +127,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -116,16 +140,22 @@ export default function ProductDetailPage() {
         </div>
         <div className="p-4 rounded-lg border border-red-200 bg-red-50 text-red-700">{error}</div>
       </div>
-    )
+    );
   }
 
-  if (!product) return null
+  if (!product) return null;
 
-  const images = product.images?.length ? product.images.map(i => i.url) : ["/placeholder.svg"]
-  const categoryName = product.category?.name || "Rau sạch"
-  const price = typeof product.price === "number" ? product.price : 0
-  const discountPercent = 27
-  const originalPrice = price > 0 ? Math.round(price / (1 - discountPercent / 100)) : 0
+  const images = product.images?.length ? product.images.map(i => i.url) : ["/placeholder.svg"];
+  const categoryName = product.category?.name || "Rau sạch";
+  const price = typeof product.price === "number" ? product.price : 0;
+  const discountPercent = 27;
+  const originalPrice = price > 0 ? Math.round(price / (1 - discountPercent / 100)) : 0;
+
+  const stock = Number.isFinite(product.stock) ? product.stock : undefined;
+  const outOfStock = stock !== undefined && stock <= 0;
+
+  const canInc = stock === undefined ? true : quantity < stock;
+  const canDec = quantity > 1;
 
   return (
     <div className="min-h-screen bg-white">
@@ -151,6 +181,7 @@ export default function ProductDetailPage() {
               alt={product.name}
               className="w-full h-full object-cover"
             />
+            {/* QR & Like */}
             <Button
               variant="ghost"
               size="icon"
@@ -169,6 +200,13 @@ export default function ProductDetailPage() {
             >
               <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
             </Button>
+
+            {/* Badge hết hàng */}
+            {outOfStock && (
+              <span className="absolute bottom-4 left-4 inline-flex items-center rounded-full bg-gray-900/85 text-white text-xs font-semibold px-3 py-1">
+                Hết hàng
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-4 gap-3">
@@ -231,6 +269,7 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
+          {/* Options (demo) */}
           <div>
             <h3 className="font-semibold mb-2">Tiêu đề:</h3>
             <div className="flex flex-wrap gap-2">
@@ -247,6 +286,7 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
+          {/* Quantity + Add to cart */}
           <div className="flex items-center gap-4">
             <span className="font-semibold">Số lượng:</span>
             <div className="flex items-center rounded-lg border">
@@ -255,6 +295,7 @@ export default function ProductDetailPage() {
                 size="icon"
                 className="h-10 w-10 rounded-l-lg"
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                disabled={!canDec}
                 aria-label="Giảm số lượng"
               >
                 <Minus className="h-4 w-4" />
@@ -266,18 +307,39 @@ export default function ProductDetailPage() {
                 variant="ghost"
                 size="icon"
                 className="h-10 w-10 rounded-r-lg"
-                onClick={() => setQuantity(q => q + 1)}
+                onClick={() => setQuantity(q => (canInc ? q + 1 : q))}
+                disabled={!canInc}
                 aria-label="Tăng số lượng"
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
+            {stock !== undefined && (
+              <span className="text-sm text-gray-500">
+                {outOfStock ? "Hết hàng" : `Còn ${stock} sp`}
+              </span>
+            )}
           </div>
 
-          <Button size="lg" className="w-full h-12 rounded-lg bg-green-600 text-white hover:bg-green-700 font-semibold">
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            THÊM VÀO GIỎ
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button
+              size="lg"
+              className="w-full h-12 rounded-lg bg-green-600 text-white hover:bg-green-700 font-semibold disabled:opacity-60"
+              onClick={handleAddToCart}
+              disabled={outOfStock || adding}
+            >
+              {added ? <Check className="h-5 w-5 mr-2" /> : <ShoppingCart className="h-5 w-5 mr-2" />}
+              {added ? "Đã thêm" : adding ? "Đang thêm..." : "THÊM VÀO GIỎ"}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full h-12 rounded-lg"
+              onClick={() => navigate("/cart")}
+            >
+              XEM GIỎ HÀNG
+            </Button>
+          </div>
 
           {product.description && (
             <div className="pt-6 border-t">
@@ -382,5 +444,5 @@ export default function ProductDetailPage() {
         </div>
       )}
     </div>
-  )
+  );
 }
