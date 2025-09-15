@@ -55,7 +55,6 @@ const CATE_DESCRIPTIONS = {
 const currencyVN = (n) =>
   typeof n === "number" ? new Intl.NumberFormat("vi-VN").format(n) + "đ" : n;
 
-// Component slide
 function HeroCarousel() {
   const [index, setIndex] = useState(0);
   const timer = useRef(null);
@@ -66,13 +65,15 @@ function HeroCarousel() {
   useEffect(() => {
     start();
     return stop;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
 
   const start = () => {
     stop();
-    timer.current = setInterval(() => {
-      setIndex((i) => (i + 1) % slides.length);
-    }, 5000);
+    timer.current = setInterval(
+      () => setIndex((i) => (i + 1) % slides.length),
+      5000
+    );
   };
   const stop = () => {
     if (timer.current) clearInterval(timer.current);
@@ -123,13 +124,15 @@ function HeroCarousel() {
       {/* Nút prev/next */}
       <button
         onClick={prev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow"
+        className="cursor-pointer absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow w-10 h-10 flex items-center justify-center hover:bg-green-100 transition"
+        aria-label="Trước"
       >
         ‹
       </button>
       <button
         onClick={next}
-        className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow"
+        className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow w-10 h-10 flex items-center justify-center hover:bg-green-100 transition"
+        aria-label="Sau"
       >
         ›
       </button>
@@ -140,6 +143,7 @@ function HeroCarousel() {
           <button
             key={i}
             onClick={() => setIndex(i)}
+            aria-label={`Chuyển tới slide ${i + 1}`}
             className={`h-2.5 w-2.5 rounded-full ${
               i === index ? "bg-slate-800" : "bg-slate-400/70"
             }`}
@@ -153,6 +157,10 @@ function HeroCarousel() {
 export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // \u2192 THÊM TÌM KIẾM THEO TÊN
+  const [query, setQuery] = useState("");
+  const inputRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -168,7 +176,8 @@ export default function HomePage() {
     })();
   }, []);
 
-  const groups = useMemo(() => {
+  // Gom nhóm theo category
+  const rawGroups = useMemo(() => {
     const map = new Map();
     for (const p of products) {
       const cat = p?.category || {};
@@ -193,6 +202,19 @@ export default function HomePage() {
     );
   }, [products]);
 
+  // Áp dụng bộ lọc theo tên (không động tới dữ liệu gốc)
+  const groups = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return rawGroups;
+    return rawGroups
+      .map((g) => ({
+        ...g,
+        items: g.items.filter((p) => p?.name?.toLowerCase().includes(q)),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [rawGroups, query]);
+
+  // Các trạng thái hiển thị
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6 text-center text-slate-600">
@@ -209,131 +231,204 @@ export default function HomePage() {
     );
   }
 
+  const clearQuery = () => {
+    setQuery("");
+    inputRef.current?.focus();
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
       {/* Slide */}
       <HeroCarousel />
 
-      {/* Section theo Category */}
-      {groups.map((g) => (
-        <section key={g.id} className="mt-7 mb-10">
-          <div className="flex items-center justify-between rounded-xl bg-green-700 px-5 py-4">
-            <div>
-              <h2 className="text-white font-bold tracking-wide text-base sm:text-lg">
-                {g.name}
-              </h2>
-              <p className="text-green-100 text-xs sm:text-sm mt-1">{g.desc}</p>
-            </div>
-            <Link
-              to={`/category/${g.id}`}
-              className="text-green-50/90 hover:text-white font-semibold text-sm inline-flex items-center gap-1"
-            >
-              Xem tất cả →
-            </Link>
-          </div>
-
-          <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
-            {g.items.slice(0, 8).map((p) => {
-              const img = (Array.isArray(p.images) && p.images[0]?.url) || "";
-              return (
-                <Link
-                  key={p._id || p.id}
-                  to={`/product/${p._id || p.id}`}
-                  className="group"
+      {/* Thanh tìm kiếm toàn trang */}
+      <section className="sticky top-3 z-20 mb-8">
+        <div className="backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/95 rounded-2xl border border-slate-200 shadow-lg ring-1 ring-slate-900/5 p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative w-full">
+              <label htmlFor="global-search" className="sr-only">
+                Tìm kiếm theo tên
+              </label>
+              <span className="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-search text-slate-400"
                 >
-                  <div className="rounded-2xl bg-white border border-green-100 shadow-sm hover:shadow-lg transition-all duration-150 hover:-translate-y-0.5">
-                    <div className="aspect-square w-full bg-green-50 border-b border-green-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
-                      {img ? (
-                        <img
-                          src={img}
-                          alt={p.name}
-                          className="max-h-[78%] max-w-[90%] object-contain"
-                        />
-                      ) : (
-                        <div className="text-slate-400 text-sm">
-                          (Không có ảnh)
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <div className="text-slate-800 font-semibold text-sm sm:text-base line-clamp-2">
-                        {p.name}
-                      </div>
-                      <div className="mt-1 text-green-700 font-bold text-sm">
-                        {currencyVN(p.price)}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.3-4.3" />
+                </svg>
+              </span>
+              <input
+                id="global-search"
+                ref={inputRef}
+                type="text"
+                placeholder="Tìm kiếm sản phẩm theo tên…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-white px-10 py-2.5 text-slate-800 shadow-sm outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-500/30"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={clearQuery}
+                  className="absolute inset-y-0 right-2 inline-flex items-center justify-center rounded-lg px-2 text-slate-400 hover:text-slate-600"
+                  aria-label="Xóa tìm kiếm"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="lucide lucide-x"
+                  >
+                    <path d="M18 6L6 18" />
+                    <path d="M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
-        </section>
-      ))}
+          {query && (
+            <p className="mt-2 text-xs text-slate-500">
+              Đang lọc theo:{" "}
+              <span className="font-medium text-slate-700">“{query}”</span>
+            </p>
+          )}
+        </div>
+      </section>
 
-      <div class="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {" "}
-        <div class="border border-green-500 rounded-lg p-6 text-center flex flex-col items-center">
-          {" "}
-          <div class="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center -mt-12 bg-white">
-            {" "}
-            <img
-              src={banner1}
-              alt="Banner 1"
-              class="w-8 h-8 text-green-600"
-            />{" "}
-          </div>{" "}
-          <h3 class="mt-6 text-green-700 font-semibold text-lg">
-            {" "}
-            Nguồn giống tiêu chuẩn{" "}
-          </h3>{" "}
-          <p class="mt-2 text-slate-600 text-sm leading-relaxed">
-            {" "}
+      {/* Section theo Category */}
+      {groups.length === 0 ? (
+        <div className="mx-auto max-w-md text-center rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
+            <span className="text-2xl" role="img" aria-label="Tìm kiếm">
+              🔎
+            </span>
+          </div>
+          <p className="text-slate-700 font-medium">
+            Không tìm thấy sản phẩm khớp từ khoá
+          </p>
+          <p className="mt-1 text-slate-500 text-sm">
+            Hãy thử từ khoá khác hoặc xoá tìm kiếm để xem tất cả sản phẩm.
+          </p>
+          <button
+            type="button"
+            onClick={clearQuery}
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm hover:shadow ring-1 ring-slate-900/5 transition"
+          >
+            Xoá bộ lọc
+          </button>
+        </div>
+      ) : (
+        groups.map((g) => (
+          <section key={g.id} className="mt-7 mb-10">
+            <div className="flex items-center justify-between rounded-xl bg-green-700 px-5 py-4">
+              <div>
+                <h2 className="text-white font-bold tracking-wide text-base sm:text-lg">
+                  {g.name}
+                </h2>
+                <p className="text-green-100 text-xs sm:text-sm mt-1">
+                  {g.desc}
+                </p>
+              </div>
+              <Link
+                to={`/food-by-category/${g.id}`}
+                className="text-green-50/90 hover:text-white font-semibold text-sm inline-flex items-center gap-1"
+              >
+                Xem tất cả →
+              </Link>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
+              {g.items.slice(0, 8).map((p) => {
+                const img = (Array.isArray(p.images) && p.images[0]?.url) || "";
+                return (
+                  <Link
+                    key={p._id || p.id}
+                    to={`/product/:id`.replace(":id", p._id || p.id)}
+                    className="group"
+                  >
+                    <div className="rounded-2xl bg-white border border-green-100 shadow-sm hover:shadow-lg transition-all duration-150 hover:-translate-y-0.5">
+                      <div className="aspect-square w-full bg-green-50 border-b border-green-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
+                        {img ? (
+                          <img
+                            src={img}
+                            alt={p.name}
+                            className="max-h-[78%] max-w-[90%] object-contain"
+                          />
+                        ) : (
+                          <div className="text-slate-400 text-sm">
+                            (Không có ảnh)
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <div className="text-slate-800 font-semibold text-sm sm:text-base line-clamp-2">
+                          {p.name}
+                        </div>
+                        <div className="mt-1 text-green-700 font-bold text-sm">
+                          {currencyVN(p.price)}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))
+      )}
+
+      {/* 3 USP cards */}
+      <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="border border-green-500 rounded-lg p-6 text-center flex flex-col items-center">
+          <div className="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center -mt-12 bg-white">
+            <img src={banner1} alt="Banner 1" className="w-8 h-8" />
+          </div>
+          <h3 className="mt-6 text-green-700 font-semibold text-lg">
+            Nguồn giống tiêu chuẩn
+          </h3>
+          <p className="mt-2 text-slate-600 text-sm leading-relaxed">
             Nguồn giống khỏe giúp cây trồng đạt năng suất và chất lượng tốt.
-            Giống mới lạ đem đến trải nghiệm mới cho thực khách{" "}
-          </p>{" "}
-        </div>{" "}
-        <div class="border border-green-500 rounded-lg p-6 text-center flex flex-col items-center">
-          {" "}
-          <div class="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center -mt-12 bg-white">
-            {" "}
-            <img
-              src={banner2}
-              alt="Banner 2"
-              class="w-8 h-8 text-green-600"
-            />{" "}
-          </div>{" "}
-          <h3 class="mt-6 text-green-700 font-semibold text-lg">
-            {" "}
-            Tiêu chuẩn chất lượng{" "}
-          </h3>{" "}
-          <p class="mt-2 text-slate-600 text-sm leading-relaxed">
-            {" "}
+            Giống mới lạ đem đến trải nghiệm mới cho thực khách
+          </p>
+        </div>
+        <div className="border border-green-500 rounded-lg p-6 text-center flex flex-col items-center">
+          <div className="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center -mt-12 bg-white">
+            <img src={banner2} alt="Banner 2" className="w-8 h-8" />
+          </div>
+          <h3 className="mt-6 text-green-700 font-semibold text-lg">
+            Tiêu chuẩn chất lượng
+          </h3>
+          <p className="mt-2 text-slate-600 text-sm leading-relaxed">
             Các vườn nông sản của Suni được ứng dụng nuôi trồng theo các tiêu
             chí an toàn hữu cơ tối thiểu theo chứng nhận của VietGap, GlobalGap
-            & Organic USDA{" "}
-          </p>{" "}
-        </div>{" "}
-        <div class="border border-green-500 rounded-lg p-6 text-center flex flex-col items-center">
-          {" "}
-          <div class="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center -mt-12 bg-white">
-            {" "}
-            <img
-              src={banner3}
-              alt="Banner 3"
-              class="w-8 h-8 text-green-600"
-            />{" "}
-          </div>{" "}
-          <h3 class="mt-6 text-green-700 font-semibold text-lg">
-            {" "}
-            Sản phẩm dinh dưỡng{" "}
-          </h3>{" "}
-          <p class="mt-2 text-slate-600 text-sm leading-relaxed">
-            {" "}
+            & Organic USDA
+          </p>
+        </div>
+        <div className="border border-green-500 rounded-lg p-6 text-center flex flex-col items-center">
+          <div className="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center -mt-12 bg-white">
+            <img src={banner3} alt="Banner 3" className="w-8 h-8" />
+          </div>
+          <h3 className="mt-6 text-green-700 font-semibold text-lg">
+            Sản phẩm dinh dưỡng
+          </h3>
+          <p className="mt-2 text-slate-600 text-sm leading-relaxed">
             Nông sản an toàn được đánh giá không chỉ an toàn và ngon mà còn có
-            nhiều giá trị dinh dưỡng thiết thực{" "}
-          </p>{" "}
-        </div>{" "}
+            nhiều giá trị dinh dưỡng thiết thực
+          </p>
+        </div>
       </div>
     </div>
   );
