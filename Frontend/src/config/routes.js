@@ -39,7 +39,6 @@ const AppRoute = [
   // Site
   { path: ROUTE_PATH.HOME, page: HomePage, layout: MainLayout },
 
-  // Cart & Checkout
   { path: ROUTE_PATH.CART, page: CartPage, layout: MainLayout },
   { path: ROUTE_PATH.FOOD_BY_CATEGORY, page: FoodByCategoryPage, layout: MainLayout },
 ];
