@@ -6,6 +6,7 @@ export const ROUTE_PATH = {
 
   // Public
   HOME: '/',
+  FOOD_BY_CATEGORY: '/food-by-category/:categoryId',
   ABOUT_US: '/aboutus',
 
   // Product
@@ -19,5 +20,9 @@ export const ROUTE_PATH = {
   CART: "/cart",
   CHECKOUT: "/checkout",
   ORDER_SUCCESS: "/order-success",
+
+  // RecipeAI
+  CHAT_RECIPE_AI: '/chat-recipe-ai',
+
 
 };
