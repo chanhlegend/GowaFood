@@ -5,6 +5,8 @@ const authRoutes = require("./authRoutes");
 const userRoutes = require("./userRoutes");
 const cartRoutes = require("./cartRoutes");
 const recipeRoutes = require("./recipeRoutes");
+const payosRouter = require('./payos');
+const orderRouter = require('./orderRoute');
 
 function route(app) {
   app.use("/api/auth", authenRoutes);
@@ -14,6 +16,9 @@ function route(app) {
   app.use("/auth", authRoutes); // Đường dẫn cho OAuth
   app.use("/api/cart", cartRoutes);
   app.use("/api/recipes", recipeRoutes);
+  app.use('/api/payos', payosRouter);
+  app.use('/api/orders', orderRouter);
+
 }
 
 module.exports = route;

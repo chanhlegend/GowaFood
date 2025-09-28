@@ -24,5 +24,10 @@ export const ROUTE_PATH = {
   // RecipeAI
   CHAT_RECIPE_AI: '/chat-recipe-ai',
 
+  // Payment
+  PAYMENT: '/payment',
+  PROCESS_PAYMENT: '/process-payment',
+  THANK_YOU: '/thank-you',
+
 
 };
