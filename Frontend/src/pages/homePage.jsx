@@ -333,7 +333,7 @@ export default function HomePage() {
       ) : (
         groups.map((g) => (
           <section key={g.id} className="mt-7 mb-10">
-            <div className="flex items-center justify-between rounded-xl bg-green-700 px-5 py-4">
+            <div className="flex items-center justify-between rounded-xl bg-custom-green px-5 py-4">
               <div>
                 <h2 className="text-white font-bold tracking-wide text-base sm:text-lg">
                   {g.name}

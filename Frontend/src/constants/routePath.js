@@ -26,6 +26,8 @@ export const ROUTE_PATH = {
 
   // Payment
   PAYMENT: '/payment',
+  PROCESS_PAYMENT: '/process-payment',
+  THANK_YOU: '/thank-you',
 
 
 };

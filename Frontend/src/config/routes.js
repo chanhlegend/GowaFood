@@ -23,6 +23,8 @@ const FoodByCategoryPage = React.lazy(() => import("../pages/foodByCategoryPage"
 
 // Payment
 const PaymentPage = React.lazy(() => import("../pages/paymentPage"));
+const ProcessPaymentPage = React.lazy(() => import("../pages/processPaymentPage"));
+const ThankYouPage = React.lazy(() => import("../pages/thankYou"));
 
 // Cấu hình route
 const AppRoute = [
@@ -46,7 +48,9 @@ const AppRoute = [
   { path: ROUTE_PATH.FOOD_BY_CATEGORY, page: FoodByCategoryPage, layout: MainLayout },
 
   // Payment
-  { path: ROUTE_PATH.PAYMENT, page: PaymentPage, layout: MainLayout }
+  { path: ROUTE_PATH.PAYMENT, page: PaymentPage, layout: MainLayout },
+  { path: ROUTE_PATH.PROCESS_PAYMENT, page: ProcessPaymentPage, layout: MainLayout },
+  { path: ROUTE_PATH.THANK_YOU, page: ThankYouPage, layout: MainLayout },
 ];
 
 export default AppRoute;
