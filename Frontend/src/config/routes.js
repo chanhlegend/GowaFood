@@ -26,6 +26,10 @@ const PaymentPage = React.lazy(() => import("../pages/paymentPage"));
 const ProcessPaymentPage = React.lazy(() => import("../pages/processPaymentPage"));
 const ThankYouPage = React.lazy(() => import("../pages/thankYou"));
 
+// Order Management
+const OrdersPage = React.lazy(() => import("../pages/orderListPage"));
+const OrderDetailPage = React.lazy(() => import("../pages/orderDetailPage"));
+const OrderNewPage = React.lazy(() => import("../pages/orderNewPage"));
 // Cấu hình route
 const AppRoute = [
   // Auth
@@ -51,6 +55,12 @@ const AppRoute = [
   { path: ROUTE_PATH.PAYMENT, page: PaymentPage, layout: MainLayout },
   { path: ROUTE_PATH.PROCESS_PAYMENT, page: ProcessPaymentPage, layout: MainLayout },
   { path: ROUTE_PATH.THANK_YOU, page: ThankYouPage, layout: MainLayout },
+
+  // ==== ORDER MANAGEMENT ====
+  { path: ROUTE_PATH.ORDERS, page: OrdersPage, layout: MainLayout },
+  { path: ROUTE_PATH.ORDER_DETAIL, page: OrderDetailPage, layout: MainLayout },
+  { path: ROUTE_PATH.ORDER_NEW, page: OrderNewPage, layout: MainLayout }
+
 ];
 
 export default AppRoute;

@@ -48,20 +48,25 @@ export default function CartPage() {
 
   // Map dữ liệu từ response controller -> UI
   function mapCartItems(resp) {
-    const list = Array.isArray(resp?.items) ? resp.items : [];
-    return list.map((it) => {
-      const p = it.product || {};
-      return {
-        id: p._id || it.product, // fallback nếu chưa populate
-        name: p.name || "Sản phẩm",
-        unit: p.unit || "1kg",
-        price: p.price || 0,
-        image: p.images?.[0]?.url || "/placeholder.svg",
-        stock: Number.isFinite(p.stock) ? p.stock : 99,
-        qty: it.quantity || 1,
-      };
-    });
-  }
+  const list = Array.isArray(resp?.items) ? resp.items : [];
+  return list.map((it) => {
+    const p = it.product || {};
+    const productId = p._id || it.product;
+    const weight = it.weight || "1KG"; // từ BE trả về
+    return {
+      // id duy nhất theo biến thể (product + weight)
+      id: `${productId}:${weight}`,
+      productId,
+      weight,
+      name: p.name || "Sản phẩm",
+      unit: weight, // hiển thị luôn cân nặng
+      price: p.price || 0,
+      image: p.images?.[0]?.url || "/placeholder.svg",
+      stock: Number.isFinite(p.stock) ? p.stock : 99,
+      qty: it.quantity || 1,
+    };
+  });
+}
 
   // ---- Tính toán tiền tệ động ----
   const subtotal = useMemo(
@@ -85,26 +90,27 @@ export default function CartPage() {
   };
 
   const updateQty = async (id, quantity) => {
-    const prev = items.find((i) => i.id === id);
-    const nextQty = Math.max(1, Math.min(quantity, prev?.stock || 99));
-    if (!prev || prev.qty === nextQty) return;
+  const prev = items.find((i) => i.id === id);
+  const nextQty = Math.max(1, Math.min(quantity, prev?.stock || 99));
+  if (!prev || prev.qty === nextQty) return;
 
-    setUpdatingId(id);
-    setQtyLocal(id, nextQty); // optimistic
-    try {
-      await CartService.updateItem({ productId: id, quantity: nextQty, userId: DEMO_USER_ID || undefined });
-      // optional: reload để chắc đồng bộ tồn kho
-      // const data = await CartService.getCart(DEMO_USER_ID || undefined);
-      // setItems(mapCartItems(data));
-    } catch (e) {
-      console.error(e);
-      // rollback
-      setQtyLocal(id, prev.qty);
-      alert(e?.message || "Cập nhật số lượng thất bại");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
+  setUpdatingId(id);
+  setQtyLocal(id, nextQty); // optimistic
+  try {
+    await CartService.updateItem({
+      productId: prev.productId,
+      quantity: nextQty,
+      weight: prev.weight,
+      userId: DEMO_USER_ID || undefined,
+    });
+  } catch (e) {
+    console.error(e);
+    setQtyLocal(id, prev.qty); // rollback
+    alert(e?.message || "Cập nhật số lượng thất bại");
+  } finally {
+    setUpdatingId(null);
+  }
+};
 
   const inc = (id) => {
     const it = items.find((i) => i.id === id);
@@ -116,16 +122,22 @@ export default function CartPage() {
   };
 
   const removeItem = async (id) => {
-    const prev = items;
-    setItems((p) => p.filter((it) => it.id !== id)); // optimistic
-    try {
-      await CartService.removeItem({ productId: id, userId: DEMO_USER_ID || undefined });
-    } catch (e) {
-      console.error(e);
-      setItems(prev); // rollback
-      alert(e?.message || "Xóa sản phẩm thất bại");
-    }
-  };
+  const prevList = items;
+  const target = items.find((it) => it.id === id);
+  setItems((p) => p.filter((it) => it.id !== id)); // optimistic
+  try {
+    if (!target) throw new Error("Không tìm thấy sản phẩm trong giỏ");
+    await CartService.removeItem({
+      productId: target.productId,
+      weight: target.weight,
+      userId: DEMO_USER_ID || undefined,
+    });
+  } catch (e) {
+    console.error(e);
+    setItems(prevList); // rollback
+    alert(e?.message || "Xóa sản phẩm thất bại");
+  }
+};
 
   const applyCoupon = () => {
     const code = coupon.trim().toUpperCase();
@@ -213,7 +225,7 @@ export default function CartPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h3 className="font-semibold leading-snug line-clamp-2">{it.name}</h3>
-                      <div className="mt-1 text-xs sm:text-sm text-gray-500">{it.unit}</div>
+                      <div className="mt-1 text-xs sm:text-sm text-gray-500">Cân nặng: {it.weight}</div>
                     </div>
                     <button
                       onClick={() => removeItem(it.id)}

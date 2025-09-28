@@ -12,10 +12,9 @@ export default function Footer() {
 
       <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-          {/* Logo */}
           <div className="md:col-span-3 flex items-start">
             <div className="flex items-center gap-3">
-              <div className="bg-white/10 rounded-2xl p-2 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl p-2 shadow-md">
                 <img
                   src={Logo}
                   alt="GOWA Food"

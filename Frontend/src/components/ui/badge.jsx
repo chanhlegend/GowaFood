@@ -1,9 +1,11 @@
-import React from "react"
-import { cva } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import React from "react";
+import { cva } from "class-variance-authority";
+// Nếu chưa có alias "@", đổi import sau thành đường dẫn tương đối: "../../lib/utils"
+import { cn } from "@/lib/utils";
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+export const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors " +
+    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
@@ -17,17 +19,17 @@ const badgeVariants = cva(
       variant: "default",
     },
   }
-)
+);
 
-const Badge = React.forwardRef(({ className, variant, ...props }, ref) => {
+export const Badge = React.forwardRef(function Badge(
+  { className, variant, ...props },
+  ref
+) {
   return (
     <span
       ref={ref}
       className={cn(badgeVariants({ variant }), className)}
       {...props}
     />
-  )
-})
-Badge.displayName = "Badge"
-
-export { Badge, badgeVariants }
+  );
+});
