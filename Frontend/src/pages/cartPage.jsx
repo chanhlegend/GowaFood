@@ -135,6 +135,11 @@ export default function CartPage() {
     else setCouponApplied(null);
   };
 
+  const handlePayment = () => {
+    // Chuyển đến trang thanh toán với các thông tin cần thiết
+    navigate("/payment", { state: { items, subtotal, discount, total, note, coupon: couponApplied } });
+  }
+
   const continueShopping = () => navigate("/");
 
   // ---- Empty state ----
@@ -359,7 +364,9 @@ export default function CartPage() {
               </div>
 
               <div className="px-4 pb-4">
-                <Button className="w-full h-12 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800">
+                <Button
+                  onClick ={ () => handlePayment() }
+                className="w-full h-12 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800">
                   THANH TOÁN
                 </Button>
                 <button

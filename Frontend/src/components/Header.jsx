@@ -55,7 +55,7 @@ export function Header() {
       }))
       : []),
     { name: "Công thức AI", href: "/chat-recipe-ai" },
-    { name: "Giới thiệu", href: "/aboutus" },
+    // { name: "Giới thiệu", href: "/aboutus" },
   ];
 
   // lock scroll khi mở menu mobile
@@ -119,7 +119,7 @@ export function Header() {
       <div className="bg-green-900 text-primary-foreground py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm md:text-base">
         <div className="container mx-auto flex items-center justify-center gap-1.5 sm:gap-2">
           <Phone className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 " />
-          <span className="text-balance text-sm sm:text-base md:text-lg font-medium text-center text-amber-500">
+          <span className="text-sm font-medium text-center text-white">
             Chuyên cung cấp sỉ trau củ quả sạch an toàn - Hotline: 0349 544 688
             - 0379 588 499
           </span>
@@ -129,13 +129,12 @@ export function Header() {
       {/* Main header */}
       <div
         className={`
-          bg-background/95 backdrop-blur-md border-b border-border
-          transition-all duration-300 ease-in-out
+          bg-background/95 backdrop-blur-md 
+          transition-all duration-300 ease-in-out rounded-b-3xl
           ${isScrolled ? "shadow-lg" : "shadow-sm"}
         `}
       >
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-5">
-          <div className="bg-background/80 backdrop-blur-sm border border-border/50 rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="bg-background/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
             <div className="flex items-center justify-between h-20 sm:h-24 lg:h-28 px-4 sm:px-6 lg:px-10">
               {/* Logo */}
               <a href="/" className="flex items-center gap-3 sm:gap-4 group">
@@ -145,15 +144,15 @@ export function Header() {
                     <img
                       src={Logo}
                       alt="GOWA Logo"
-                      className="h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 rounded-full object-cover"
+                      className="h-12 w-12 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full object-cover"
                     />
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-green-700 group-hover:text-green-600 transition-colors duration-300 leading-none">
+                  <h1 className="text-2xl sm:text-2xl lg:text-3xl font-extrabold text-custom-green group-hover:text-green-600 transition-colors duration-300 leading-none">
                     GOWA
                   </h1>
-                  <span className="text-base sm:text-lg lg:text-xl text-green-800 -mt-0.5 sm:-mt-1">
+                  <span className="text-base sm:text-lg lg:text-xl text-custom-green -mt-0.5 sm:-mt-1">
                     Food
                   </span>
                 </div>
@@ -167,7 +166,7 @@ export function Header() {
                     href={item.href}
                     className="
                       relative px-3 py-2 lg:px-6 lg:py-3
-                      text-sm lg:text-lg font-semibold text-green-800
+                      text-sm lg:text-[18px] font-semibold text-green-800
                       rounded-lg transition-all duration-300 ease-in-out
                       hover:bg-muted hover:text-green-700 hover:scale-[1.03]
                       focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2
@@ -200,7 +199,7 @@ export function Header() {
                         }
                         className="
                           relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
-                          transition-all duration-300 ease-in-out
+                          transition-all duration-300 ease-in-out cursor-pointer
                           focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                         "
                       >
@@ -255,11 +254,12 @@ export function Header() {
 
                     {/* Shopping Cart */}
                     <Button
+                      onClick={() => { window.location.href = "/cart"; }}
                       variant="ghost"
                       size="icon"
                       className="
                         relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
-                        transition-all duration-300 ease-in-out
+                        transition-all duration-300 ease-in-out cursor-pointer
                         focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                       "
                     >
@@ -310,7 +310,6 @@ export function Header() {
               </div>
             </div>
           </div>
-        </div>
       </div>
 
       {/* Mobile Menu (slide-in) */}
