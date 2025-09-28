@@ -32,6 +32,12 @@ const OrderSchema = new mongoose.Schema({
       isDefault: { type: Boolean, default: false },
     },
   },
+  status: {
+    type: String,
+    enum: ['PENDING', 'SHIPPING', 'DELIVERED'],
+    default: 'PENDING',
+    index: true,
+  },
   notes: { type: String }
 }, { timestamps: true });
 
