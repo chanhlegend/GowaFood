@@ -4,7 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Minus, Plus, ShoppingCart, Heart, Star, ArrowLeft, QrCode, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductService } from "@/services/ProductService";
-import { CartService } from "@/services/CartService"; // <-- thêm
+import { CartService } from "@/services/CartService";
+import Reviews from "@/components/Reviews"; 
 
 const QR_STATIC = {
   farmName: "Suni Green Farm",
@@ -43,10 +44,10 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
-
+  const [selected, setSelected] = useState("1KG");
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);         // trạng thái gọi API add to cart
-  const [added, setAdded] = useState(false);           // feedback đã thêm
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
   const [product, setProduct] = useState(null);
 
@@ -61,7 +62,6 @@ export default function ProductDetailPage() {
         const data = await ProductService.getProductById(productId);
         if (!mounted) return;
         setProduct(data);
-        // reset trạng thái khi thay đổi sản phẩm
         setQuantity(1);
         setAdded(false);
       } catch (e) {
@@ -76,15 +76,12 @@ export default function ProductDetailPage() {
   }, [productId]);
 
   const handleAddToCart = async () => {
-    if (!product?._id) return;
-    if (adding) return;
+    if (!product?._id || adding) return;
     setAdding(true);
     setAdded(false);
     try {
-      // Nếu backend chưa auth, có thể truyền userId test ở đây: { userId: "6655..." }
-      await CartService.addItem({ productId: product._id, quantity });
+      await CartService.addItem({ productId: product._id, quantity, weight: selected });
       setAdded(true);
-      // tự tắt "đã thêm" sau 1.5s
       setTimeout(() => setAdded(false), 1500);
     } catch (e) {
       alert(e?.message || "Thêm vào giỏ thất bại");
@@ -176,11 +173,7 @@ export default function ProductDetailPage() {
         {/* Left: images */}
         <div className="space-y-4">
           <div className="relative aspect-square border rounded-xl bg-gray-50 overflow-hidden">
-            <img
-              src={images[selectedImage]}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
+            <img src={images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
             {/* QR & Like */}
             <Button
               variant="ghost"
@@ -255,7 +248,9 @@ export default function ProductDetailPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h3 className="font-semibold text-green-800">Nguồn gốc sản phẩm</h3>
-                <p className="text-sm text-green-700">Nông trại {QR_STATIC.farmName} - {QR_STATIC.address.split(",")[0]}</p>
+                <p className="text-sm text-green-700">
+                  Nông trại {QR_STATIC.farmName} - {QR_STATIC.address.split(",")[0]}
+                </p>
                 <p className="text-xs text-green-600">Chứng nhận {QR_STATIC.certs}</p>
               </div>
               <Button
@@ -269,20 +264,25 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Options (demo) */}
           <div>
-            <h3 className="font-semibold mb-2">Tiêu đề:</h3>
+            <h3 className="font-semibold mb-2">Cân nặng:</h3>
             <div className="flex flex-wrap gap-2">
-              <button className="inline-flex h-8 items-center rounded-full border-2 border-green-600 px-3 text-sm font-medium text-green-700 bg-white">1KG</button>
-              <button className="inline-flex h-8 items-center rounded-full border px-3 text-sm font-medium bg-white">500G</button>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-2">Loại:</h3>
-            <div className="flex flex-wrap gap-2">
-              <button className="inline-flex h-8 items-center rounded-full border-2 border-green-600 px-3 text-sm font-semibold text-green-700 bg-white">KG - MEMBERSHIP</button>
-              <button className="inline-flex h-8 items-center rounded-full border px-3 text-sm font-semibold bg-white">CẦN TÂY HỮU CƠ - MEMBERSHIP</button>
+              <button
+                onClick={() => setSelected("1KG")}
+                className={`inline-flex h-8 items-center rounded-full px-3 text-sm font-medium ${
+                  selected === "1KG" ? "border-2 border-green-600 text-green-700 bg-white" : "border bg-white"
+                }`}
+              >
+                1KG
+              </button>
+              <button
+                onClick={() => setSelected("500G")}
+                className={`inline-flex h-8 items-center rounded-full px-3 text-sm font-medium ${
+                  selected === "500G" ? "border-2 border-green-600 text-green-700 bg-white" : "border bg-white"
+                }`}
+              >
+                500G
+              </button>
             </div>
           </div>
 
@@ -350,6 +350,11 @@ export default function ProductDetailPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Reviews block — đặt TRƯỚC Related */}
+      <div className="max-w-6xl mx-auto px-4 pb-10">
+        <Reviews productId={product._id} />
       </div>
 
       {/* Related */}

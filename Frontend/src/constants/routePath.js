@@ -29,5 +29,9 @@ export const ROUTE_PATH = {
   PROCESS_PAYMENT: '/process-payment',
   THANK_YOU: '/thank-you',
 
+  // ==== ORDER MANAGEMENT ====
+  ORDERS: "/orders",             
+  ORDER_DETAIL: "/orders/:id",    
+  ORDER_NEW: "/orders/new", 
 
 };

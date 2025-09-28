@@ -11,6 +11,7 @@ import {
   LogOut,
   UserCircle,
   LogIn,
+  ClipboardList,
 } from "lucide-react";
 import Logo from "../assets/images/logo.png";
 
@@ -134,37 +135,37 @@ export function Header() {
           ${isScrolled ? "shadow-lg" : "shadow-sm"}
         `}
       >
-          <div className="bg-background/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="flex items-center justify-between h-20 sm:h-24 lg:h-28 px-4 sm:px-6 lg:px-10">
-              {/* Logo */}
-              <a href="/" className="flex items-center gap-3 sm:gap-4 group">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300" />
-                  <div className="relative bg-green-900 rounded-full p-1.5 sm:p-2 group-hover:scale-110 transition-transform duration-300">
-                    <img
-                      src={Logo}
-                      alt="GOWA Logo"
-                      className="h-12 w-12 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full object-cover"
-                    />
-                  </div>
+        <div className="bg-background/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between h-20 sm:h-24 lg:h-28 px-4 sm:px-6 lg:px-10">
+            {/* Logo */}
+            <a href="/" className="flex items-center gap-3 sm:gap-4 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300" />
+                <div className="relative bg-green-900 rounded-full p-1.5 sm:p-2 group-hover:scale-110 transition-transform duration-300">
+                  <img
+                    src={Logo}
+                    alt="GOWA Logo"
+                    className="h-12 w-12 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full object-cover"
+                  />
                 </div>
-                <div className="flex flex-col">
-                  <h1 className="text-2xl sm:text-2xl lg:text-3xl font-extrabold text-custom-green group-hover:text-green-600 transition-colors duration-300 leading-none">
-                    GOWA
-                  </h1>
-                  <span className="text-base sm:text-lg lg:text-xl text-custom-green -mt-0.5 sm:-mt-1">
-                    Food
-                  </span>
-                </div>
-              </a>
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-2xl sm:text-2xl lg:text-3xl font-extrabold text-custom-green group-hover:text-green-600 transition-colors duration-300 leading-none">
+                  GOWA
+                </h1>
+                <span className="text-base sm:text-lg lg:text-xl text-custom-green -mt-0.5 sm:-mt-1">
+                  Food
+                </span>
+              </div>
+            </a>
 
-              {/* Desktop Navigation */}
-              <nav className="hidden md:flex items-center gap-1.5 lg:gap-3">
-                {navigationItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-1.5 lg:gap-3">
+              {navigationItems.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="
                       relative px-3 py-2 lg:px-6 lg:py-3
                       text-sm lg:text-[18px] font-semibold text-green-800
                       rounded-lg transition-all duration-300 ease-in-out
@@ -172,144 +173,169 @@ export function Header() {
                       focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                       group
                     "
-                  >
-                    <span className="relative z-10">{item.name}</span>
-                    <div
-                      className="
+                >
+                  <span className="relative z-10">{item.name}</span>
+                  <div
+                    className="
                         absolute inset-0 bg-gradient-to-r from-green-600/10 to-green-700/10 
                         rounded-lg opacity-0 group-hover:opacity-100 
                         transition-opacity duration-300 ease-in-out
                       "
-                    />
-                  </a>
-                ))}
-              </nav>
+                  />
+                </a>
+              ))}
+            </nav>
 
-              {/* Right side icons */}
-              <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-                {isLoggedIn ? (
-                  <>
-                    {/* User Account Dropdown */}
-                    <div className="relative" ref={userDropdownRef}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          setIsUserDropdownOpen(!isUserDropdownOpen)
-                        }
-                        className="
+            {/* Right side icons */}
+            <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+              {isLoggedIn ? (
+                <>
+                  {/* User Account Dropdown */}
+                  <div className="relative" ref={userDropdownRef}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setIsUserDropdownOpen(!isUserDropdownOpen)
+                      }
+                      className="
                           relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
                           transition-all duration-300 ease-in-out cursor-pointer
                           focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                         "
-                      >
-                        <User className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
-                        <span className="sr-only">Tài khoản</span>
-                      </Button>
+                    >
+                      <User className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                      <span className="sr-only">Tài khoản</span>
+                    </Button>
 
-                      {/* Dropdown Menu */}
-                      {isUserDropdownOpen && (
-                        <div
-                          className="
+                    {/* Dropdown Menu */}
+                    {isUserDropdownOpen && (
+                      <div
+                        className="
                           absolute right-0 top-full mt-2 w-48
                           bg-white border border-gray-200 rounded-lg shadow-lg
                           py-2 z-50
                           animate-in slide-in-from-top-2 duration-200
                         "
-                        >
-                          <a
-                            href="/profile"
-                            className="
+                      >
+                        <a
+                          href="/profile"
+                          className="
                               flex items-center gap-3 px-4 py-3 text-sm text-gray-700
                               hover:bg-gray-50 hover:text-green-700
                               transition-colors duration-200
                             "
-                            onClick={() => setIsUserDropdownOpen(false)}
-                          >
-                            <UserCircle className="h-4 w-4" />
-                            Hồ sơ cá nhân
-                          </a>
-                          <button
-                            className="
+                          onClick={() => setIsUserDropdownOpen(false)}
+                        >
+                          <UserCircle className="h-4 w-4" />
+                          Hồ sơ cá nhân
+                        </a>
+                        <a
+                          href="/orders"
+                          className="
+                           flex items-center gap-3 px-4 py-3 text-sm text-gray-700
+                           hover:bg-gray-50 hover:text-green-700
+                            transition-colors duration-200  "
+
+                          onClick={() => setIsUserDropdownOpen(false)}
+                        >
+                          <ClipboardList className="h-4 w-4" />
+                          Theo dõi đơn hàng
+                        </a>
+                        <button
+                          className="
                               w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700
                               hover:bg-gray-50 hover:text-red-600
                               transition-colors duration-200
                             "
-                            onClick={() => {
-                              setIsUserDropdownOpen(false);
-                              // Xóa dữ liệu user khỏi localStorage
-                              localStorage.removeItem("user_gowa");
-                              // Cập nhật trạng thái đăng nhập
-                              setIsLoggedIn(false);
-                              // Chuyển hướng về trang home
-                              window.location.href = '/'
-                            }}
-                          >
-                            <LogOut className="h-4 w-4" />
-                            Đăng xuất
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Shopping Cart */}
-                    <Button
-                      onClick={() => { window.location.href = "/cart"; }}
-                      variant="ghost"
-                      size="icon"
-                      className="
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            // Xóa dữ liệu user khỏi localStorage
+                            localStorage.removeItem("user_gowa");
+                            // Cập nhật trạng thái đăng nhập
+                            setIsLoggedIn(false);
+                            // Chuyển hướng về trang home
+                            window.location.href = '/'
+                          }}
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Đăng xuất
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => { window.location.href = "/orders"; }}
+                    variant="ghost"
+                    size="icon"
+                    className="
+    relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
+    transition-all duration-300 ease-in-out cursor-pointer
+    focus:ring-2 focus:ring-green-600 focus:ring-offset-2
+  "
+                    title="Theo dõi đơn hàng"
+                  >
+                    <ClipboardList className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                    <span className="sr-only">Theo dõi đơn hàng</span>
+                  </Button>
+                  {/* Shopping Cart */}
+                  <Button
+                    onClick={() => { window.location.href = "/cart"; }}
+                    variant="ghost"
+                    size="icon"
+                    className="
                         relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
                         transition-all duration-300 ease-in-out cursor-pointer
                         focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                       "
-                    >
-                      <ShoppingCart className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
-                      <div
-                        className="
+                  >
+                    <ShoppingCart className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                    <div
+                      className="
                           absolute -top-2 -right-2 bg-green-700 text-white
                           text-[10px] sm:text-xs rounded-full
                           h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center
                           animate-pulse
                         "
-                      >
-                        0
-                      </div>
-                      <span className="sr-only">Giỏ hàng</span>
-                    </Button>
-                  </>
-                ) : (
-                  /* Login Icon */
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="
+                    >
+                      0
+                    </div>
+                    <span className="sr-only">Giỏ hàng</span>
+                  </Button>
+                </>
+              ) : (
+                /* Login Icon */
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="
                       relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
                       transition-all duration-300 ease-in-out
                       focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                     "
-                    onClick={() => {
-                      // Chuyển đến trang login
-                      window.location.href = "/login";
-                    }}
-                  >
-                    <LogIn className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
-                    <span className="sr-only">Đăng nhập</span>
-                  </Button>
-                )}
-
-                {/* Mobile Menu Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsMobileMenuOpen(true)}
-                  className="md:hidden hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700 transition-all duration-300 ease-in-out"
-                  aria-label="Mở menu"
+                  onClick={() => {
+                    // Chuyển đến trang login
+                    window.location.href = "/login";
+                  }}
                 >
-                  <Menu className="h-7 w-7 sm:h-8 sm:w-8" />
+                  <LogIn className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                  <span className="sr-only">Đăng nhập</span>
                 </Button>
-              </div>
+              )}
+
+              {/* Mobile Menu Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700 transition-all duration-300 ease-in-out"
+                aria-label="Mở menu"
+              >
+                <Menu className="h-7 w-7 sm:h-8 sm:w-8" />
+              </Button>
             </div>
           </div>
+        </div>
       </div>
 
       {/* Mobile Menu (slide-in) */}
@@ -401,6 +427,19 @@ export function Header() {
                 >
                   <UserCircle className="h-5 w-5" />
                   Hồ sơ cá nhân
+                </a>
+
+                <a
+                  href="/orders"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="
+    flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+    rounded-lg transition-all duration-300 ease-in-out
+    hover:bg-muted hover:text-green-700 hover:translate-x-2
+  "
+                >
+                  <ClipboardList className="h-5 w-5" />
+                  Theo dõi đơn hàng
                 </a>
                 <button
                   onClick={() => {
