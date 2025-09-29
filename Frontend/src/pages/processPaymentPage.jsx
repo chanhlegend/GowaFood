@@ -55,6 +55,8 @@ export default function ProcessPaymentPage() {
 
   const isBank = order?.payment?.method === "BANK";
   const isCOD = order?.payment?.method === "COD";
+  console.log("Payment method:", order?.payment?.method, { isBank, isCOD });
+  
 
   const amount = useMemo(() => order?.amounts?.total ?? 0, [order]);
   const orderData = {
@@ -75,7 +77,7 @@ export default function ProcessPaymentPage() {
       total: order.amounts?.total || 0,
     },
     payment: {
-      method: "BANK",
+      method: isBank ? "BANK" : "COD",
       bankTransferNote: order.payment?.bankTransferNote || "",
     },
     shipping: {
