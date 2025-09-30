@@ -5,7 +5,8 @@ const OrderSchema = new mongoose.Schema({
   products: [{
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     quantity: Number,
-    price: Number
+    price: Number,
+    weight: { type: String, enum: ['500G', '1KG'], required: true, default: '1KG' },
   }],
   discount: {
     pointsUsed: { type: Number, default: 0 },
