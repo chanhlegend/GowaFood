@@ -5,27 +5,7 @@ import { Minus, Plus, ShoppingCart, Heart, Star, ArrowLeft, QrCode, Check } from
 import { Button } from "@/components/ui/button";
 import { ProductService } from "@/services/ProductService";
 import { CartService } from "@/services/CartService";
-import Reviews from "@/components/Reviews"; 
-
-const QR_STATIC = {
-  farmName: "Suni Green Farm",
-  address: "Đà Lạt, Lâm Đồng",
-  harvestDate: "15/12/2024",
-  certs: "VietGAP, Hữu cơ",
-  image: "/qr-celery.png",
-};
-
-const relatedProducts = [
-  { id: 1, name: "Cải Kale Mỹ", price: "100,000", originalPrice: "120,000", image: "/placeholder-4d4pe.png", badge: "Hết hàng" },
-  { id: 2, name: "Cải Bó Xôi Thủy Canh Việt Gap", price: "69,000", image: "/fresh-spinach.png", badge: null },
-  { id: 3, name: "Cải bó xôi nhỏ cơ", price: "108,000", image: "/placeholder-7bzjs.png", badge: null },
-  { id: 4, name: "Cà rốt mini", price: "129,000", image: "/placeholder-gvk5a.png", badge: null },
-];
-
-const viewedProducts = [
-  { id: 101, name: "Cần tây", price: "109,000", originalPrice: "130,000", image: "/placeholder-m3uww.png", badge: "Sale" },
-  { id: 102, name: "Nấm đùi gà", price: "195,000", image: "/placeholder-mia65.png", badge: null },
-];
+import Reviews from "@/components/Reviews";
 
 function makeSeededGrid(count, seed = 98765) {
   let x = seed >>> 0, out = [];
@@ -51,19 +31,39 @@ export default function ProductDetailPage() {
   const [error, setError] = useState("");
   const [product, setProduct] = useState(null);
 
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [viewedProducts, setViewedProducts] = useState([]);
+
   const qrDots = useMemo(() => makeSeededGrid(8 * 8), []);
 
+  // Load product + related + viewed
   useEffect(() => {
     let mounted = true;
     async function load() {
       try {
         setLoading(true);
         setError("");
+
         const data = await ProductService.getProductById(productId);
         if (!mounted) return;
         setProduct(data);
         setQuantity(1);
         setAdded(false);
+
+        // Optional calls – chỉ chạy nếu service có
+        try {
+          if (typeof ProductService.getRelated === "function") {
+            const rel = await ProductService.getRelated(productId);
+            if (mounted) setRelatedProducts(Array.isArray(rel) ? rel : []);
+          }
+        } catch (_) {}
+
+        try {
+          if (typeof ProductService.getRecentlyViewed === "function") {
+            const viewed = await ProductService.getRecentlyViewed();
+            if (mounted) setViewedProducts(Array.isArray(viewed) ? viewed : []);
+          }
+        } catch (_) {}
       } catch (e) {
         if (!mounted) return;
         setError(e?.message || "Không thể tải sản phẩm");
@@ -104,7 +104,7 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <header className="sticky top-0 z-50 bg-white border-b">
+        <header className="sticky top-0 bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/")}>
               <ArrowLeft className="h-4 w-4" /> Trang chủ
@@ -115,7 +115,7 @@ export default function ProductDetailPage() {
           </div>
         </header>
         <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 gap-8 animate-pulse">
-          <div className="h-[420px] md:h-[520px] bg-gray-100 rounded-xl" />
+          <div className="h-[300px] sm:h-[380px] md:h-[520px] bg-gray-100 rounded-xl" />
           <div className="space-y-4">
             <div className="h-8 bg-gray-100 rounded w-2/3" />
             <div className="h-4 bg-gray-100 rounded w-1/3" />
@@ -142,11 +142,30 @@ export default function ProductDetailPage() {
 
   if (!product) return null;
 
-  const images = product.images?.length ? product.images.map(i => i.url) : ["/placeholder.svg"];
+  const images = product.images?.length ? product.images.map(i => i.url ?? i) : ["/placeholder.svg"];
   const categoryName = product.category?.name || "Rau sạch";
-  const price = typeof product.price === "number" ? product.price : 0;
-  const discountPercent = 27;
-  const originalPrice = price > 0 ? Math.round(price / (1 - discountPercent / 100)) : 0;
+
+  // === Giá theo trọng lượng ===
+  const rawPrice = Number.isFinite(product.price) ? product.price : 0;
+  const rawOriginal =
+    Number.isFinite(product.originalPrice) ? product.originalPrice :
+    (Number.isFinite(product.compareAtPrice) ? product.compareAtPrice : 0);
+
+  const weightFactor = selected === "500G" ? 0.5 : 1; // giảm nửa khi 500G
+  const price = Math.max(0, Math.round(rawPrice * weightFactor));
+
+  let originalPrice = 0;
+  let discountPercent = 0;
+
+  if (rawOriginal > rawPrice) {
+    originalPrice = Math.round(rawOriginal * weightFactor);
+    discountPercent = Math.max(0, Math.round((1 - rawPrice / rawOriginal) * 100));
+  } else {
+    // fallback nếu không có originalPrice: giữ -27% như trước
+    const fallbackPercent = 27;
+    originalPrice = price > 0 ? Math.round(price / (1 - fallbackPercent / 100)) : 0;
+    discountPercent = price > 0 ? fallbackPercent : 0;
+  }
 
   const stock = Number.isFinite(product.stock) ? product.stock : undefined;
   const outOfStock = stock !== undefined && stock <= 0;
@@ -154,31 +173,39 @@ export default function ProductDetailPage() {
   const canInc = stock === undefined ? true : quantity < stock;
   const canDec = quantity > 1;
 
+  // Origin/QR từ data (fallback nếu thiếu)
+  const origin = product.origin || {};
+  const farmName = origin.farmName || "Nông trại";
+  const address = origin.address || "—";
+  const harvestDate = origin.harvestDate || product.harvestDate || "—";
+  const certs = Array.isArray(origin.certs) ? origin.certs.join(", ") : (origin.certs || product.certs || "—");
+  const qrImage = product.qrImage || origin.qrImage || "";
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4" /> Trang chủ
           </Button>
-          <div className="flex gap-2 text-sm text-gray-500">
+          <div className="hidden sm:flex gap-2 text-sm text-gray-500">
             <span>{categoryName}</span><span>/</span><span className="font-medium">{product.name}</span>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {/* Left: images */}
         <div className="space-y-4">
-          <div className="relative aspect-square border rounded-xl bg-gray-50 overflow-hidden">
+          <div className="relative aspect-square sm:aspect-[4/3] md:aspect-square border rounded-xl bg-gray-50 overflow-hidden">
             <img src={images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
             {/* QR & Like */}
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 left-4 bg-white/85 rounded-lg"
+              className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white/85 rounded-lg"
               onClick={() => setShowQRCode(true)}
               aria-label="Xem QR"
             >
@@ -187,7 +214,7 @@ export default function ProductDetailPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4 bg-white/85 rounded-lg"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/85 rounded-lg"
               onClick={() => setIsFavorite(v => !v)}
               aria-label="Yêu thích"
             >
@@ -196,18 +223,19 @@ export default function ProductDetailPage() {
 
             {/* Badge hết hàng */}
             {outOfStock && (
-              <span className="absolute bottom-4 left-4 inline-flex items-center rounded-full bg-gray-900/85 text-white text-xs font-semibold px-3 py-1">
+              <span className="absolute bottom-3 left-3 inline-flex items-center rounded-full bg-gray-900/85 text-white text-xs font-semibold px-3 py-1">
                 Hết hàng
               </span>
             )}
           </div>
 
-          <div className="grid grid-cols-4 gap-3">
-            {images.slice(0, 4).map((img, i) => (
+          {/* Thumbnails: trượt ngang trên mobile, grid trên md+ */}
+          <div className="md:grid md:grid-cols-4 md:gap-3 flex gap-3 overflow-x-auto no-scrollbar">
+            {images.slice(0, 8).map((img, i) => (
               <button
                 key={i}
                 onClick={() => setSelectedImage(i)}
-                className={`aspect-square rounded-xl overflow-hidden border transition-colors ${
+                className={`min-w-[88px] md:min-w-0 aspect-square rounded-xl overflow-hidden border transition-colors ${
                   selectedImage === i ? "border-green-600" : "border-gray-200 hover:border-green-300"
                 }`}
                 aria-label={`Ảnh ${i + 1}`}
@@ -221,7 +249,7 @@ export default function ProductDetailPage() {
         {/* Right: info */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold">{product.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">{product.name}</h1>
             <div className="flex items-center gap-2 mt-1">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -230,8 +258,8 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-extrabold text-green-700 tracking-tight">
+          <div className="flex items-center flex-wrap gap-3">
+            <span className="text-2xl sm:text-3xl font-extrabold text-green-700 tracking-tight">
               {price.toLocaleString("vi-VN")}₫
             </span>
             {originalPrice > price && (
@@ -239,19 +267,21 @@ export default function ProductDetailPage() {
                 {originalPrice.toLocaleString("vi-VN")}₫
               </span>
             )}
-            <span className="inline-flex h-7 items-center rounded-full bg-red-500 px-3 text-xs font-semibold text-white leading-none">
-              -{discountPercent}%
-            </span>
+            {discountPercent > 0 && (
+              <span className="inline-flex h-7 items-center rounded-full bg-red-500 px-3 text-xs font-semibold text-white leading-none">
+                -{discountPercent}%
+              </span>
+            )}
           </div>
 
           <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <h3 className="font-semibold text-green-800">Nguồn gốc sản phẩm</h3>
-                <p className="text-sm text-green-700">
-                  Nông trại {QR_STATIC.farmName} - {QR_STATIC.address.split(",")[0]}
+                <p className="text-sm text-green-700 truncate">
+                  Nông trại {farmName} {address && `- ${String(address).split(",")[0]}`}
                 </p>
-                <p className="text-xs text-green-600">Chứng nhận {QR_STATIC.certs}</p>
+                <p className="text-xs text-green-600">Chứng nhận {certs}</p>
               </div>
               <Button
                 variant="outline"
@@ -267,29 +297,27 @@ export default function ProductDetailPage() {
           <div>
             <h3 className="font-semibold mb-2">Cân nặng:</h3>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelected("1KG")}
-                className={`inline-flex h-8 items-center rounded-full px-3 text-sm font-medium ${
-                  selected === "1KG" ? "border-2 border-green-600 text-green-700 bg-white" : "border bg-white"
-                }`}
-              >
-                1KG
-              </button>
-              <button
-                onClick={() => setSelected("500G")}
-                className={`inline-flex h-8 items-center rounded-full px-3 text-sm font-medium ${
-                  selected === "500G" ? "border-2 border-green-600 text-green-700 bg-white" : "border bg-white"
-                }`}
-              >
-                500G
-              </button>
+              {["1KG", "500G"].map((w) => (
+                <button
+                  key={w}
+                  onClick={() => setSelected(w)}
+                  className={`inline-flex h-9 items-center rounded-full px-3 text-sm font-medium ${
+                    selected === w ? "border-2 border-green-600 text-green-700 bg-white" : "border bg-white"
+                  }`}
+                >
+                  {w}
+                </button>
+              ))}
             </div>
+            <p className="mt-2 text-xs text-gray-500">
+              Giá hiển thị đang áp dụng cho tuỳ chọn <span className="font-medium">{selected}</span>.
+            </p>
           </div>
 
           {/* Quantity + Add to cart */}
           <div className="flex items-center gap-4">
             <span className="font-semibold">Số lượng:</span>
-            <div className="flex items-center rounded-lg border">
+            <div className="flex items-center rounded-lg border w-full max-w-[220px]">
               <Button
                 variant="ghost"
                 size="icon"
@@ -300,7 +328,7 @@ export default function ProductDetailPage() {
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <span className="min-w-[64px] text-center font-medium" aria-live="polite">
+              <span className="min-w-[64px] flex-1 text-center font-medium" aria-live="polite">
                 {quantity}
               </span>
               <Button
@@ -315,7 +343,7 @@ export default function ProductDetailPage() {
               </Button>
             </div>
             {stock !== undefined && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 shrink-0">
                 {outOfStock ? "Hết hàng" : `Còn ${stock} sp`}
               </span>
             )}
@@ -358,62 +386,80 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Related */}
-      <div className="max-w-6xl mx-auto px-4 pb-10">
-        <div className="bg-green-800 text-white text-center py-3 rounded-t-xl mb-6">
-          <h2 className="text-lg font-semibold tracking-wide">SẢN PHẨM LIÊN QUAN</h2>
-        </div>
+      {relatedProducts?.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 pb-10">
+          <div className="bg-green-800 text-white text-center py-3 rounded-t-xl mb-6">
+            <h2 className="text-lg font-semibold tracking-wide">SẢN PHẨM LIÊN QUAN</h2>
+          </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {relatedProducts.map((p) => (
-            <div key={p.id} className="rounded-xl border bg-white shadow-sm p-4">
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 mb-3">
-                <img src={p.image || "/placeholder.svg"} alt={p.name} className="w-full h-full object-cover" />
-                {!!p.badge && (
-                  <span className="absolute top-3 left-3 inline-flex items-center rounded-full bg-emerald-700 text-white text-xs font-semibold px-3 py-1">
-                    {p.badge}
-                  </span>
-                )}
-              </div>
-              <h3 className="font-medium text-sm mb-2 line-clamp-2">{p.name}</h3>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-emerald-700">{p.price}₫</span>
-                {p.originalPrice && (
-                  <span className="text-xs text-gray-400 line-through">{p.originalPrice}₫</span>
-                )}
-              </div>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {relatedProducts.map((p) => {
+              const pImg = p.images?.[0]?.url ?? p.images?.[0] ?? "/placeholder.svg";
+              const pPrice = Number.isFinite(p.price) ? p.price : 0;
+              const pOrig = Number.isFinite(p.originalPrice) ? p.originalPrice : 0;
+              return (
+                <div key={p._id || p.id} className="rounded-xl border bg-white shadow-sm p-4">
+                  <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 mb-3">
+                    <img src={pImg} alt={p.name} className="w-full h-full object-cover" />
+                    {p.badge && (
+                      <span className="absolute top-3 left-3 inline-flex items-center rounded-full bg-emerald-700 text-white text-xs font-semibold px-3 py-1">
+                        {p.badge}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-medium text-sm mb-2 line-clamp-2">{p.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-emerald-700">{pPrice.toLocaleString("vi-VN")}₫</span>
+                    {pOrig > pPrice && (
+                      <span className="text-xs text-gray-400 line-through">
+                        {pOrig.toLocaleString("vi-VN")}₫
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Viewed */}
-      <div className="max-w-6xl mx-auto px-4 pb-16">
-        <div className="bg-green-800 text-white text-center py-3 rounded-t-xl mb-6">
-          <h2 className="text-lg font-semibold tracking-wide">SẢN PHẨM ĐÃ XEM</h2>
-        </div>
+      {viewedProducts?.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 pb-16">
+          <div className="bg-green-800 text-white text-center py-3 rounded-t-xl mb-6">
+            <h2 className="text-lg font-semibold tracking-wide">SẢN PHẨM ĐÃ XEM</h2>
+          </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {viewedProducts.map((p) => (
-            <div key={p.id} className="rounded-xl border bg-white shadow-sm p-4">
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 mb-3">
-                <img src={p.image || "/placeholder.svg"} alt={p.name} className="w-full h-full object-cover" />
-                {!!p.badge && (
-                  <span className="absolute top-3 left-3 inline-flex items-center rounded-full bg-red-500 text-white text-xs font-semibold px-3 py-1">
-                    {p.badge}
-                  </span>
-                )}
-              </div>
-              <h3 className="font-medium text-sm mb-2">{p.name}</h3>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-emerald-700">{p.price}₫</span>
-                {p.originalPrice && (
-                  <span className="text-xs text-gray-400 line-through">{p.originalPrice}₫</span>
-                )}
-              </div>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {viewedProducts.map((p) => {
+              const pImg = p.images?.[0]?.url ?? p.images?.[0] ?? "/placeholder.svg";
+              const pPrice = Number.isFinite(p.price) ? p.price : 0;
+              const pOrig = Number.isFinite(p.originalPrice) ? p.originalPrice : 0;
+              return (
+                <div key={p._id || p.id} className="rounded-xl border bg-white shadow-sm p-4">
+                  <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 mb-3">
+                    <img src={pImg} alt={p.name} className="w-full h-full object-cover" />
+                    {p.badge && (
+                      <span className="absolute top-3 left-3 inline-flex items-center rounded-full bg-red-500 text-white text-xs font-semibold px-3 py-1">
+                        {p.badge}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-medium text-sm mb-2 line-clamp-2">{p.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-emerald-700">{pPrice.toLocaleString("vi-VN")}₫</span>
+                    {pOrig > pPrice && (
+                      <span className="text-xs text-gray-400 line-through">
+                        {pOrig.toLocaleString("vi-VN")}₫
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* QR Modal */}
       {showQRCode && (
@@ -423,8 +469,8 @@ export default function ProductDetailPage() {
 
             <div className="mt-4 rounded-xl border bg-gray-50 p-4">
               <div className="w-48 h-48 mx-auto rounded-xl bg-white flex items-center justify-center">
-                {QR_STATIC.image ? (
-                  <img src={QR_STATIC.image} alt="Mã QR nguồn gốc" className="w-full h-full object-contain" />
+                {qrImage ? (
+                  <img src={qrImage} alt="Mã QR nguồn gốc" className="w-full h-full object-contain" />
                 ) : (
                   <div className="grid grid-cols-8 gap-[2px]">
                     {qrDots.map((on, i) => (
@@ -436,10 +482,10 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="mt-4 text-sm text-center space-y-1">
-              <p className="font-semibold text-emerald-700">Nông trại: {QR_STATIC.farmName}</p>
-              <p className="text-gray-600">Địa chỉ: {QR_STATIC.address}</p>
-              <p className="text-gray-600">Ngày thu hoạch: {QR_STATIC.harvestDate}</p>
-              <p className="text-gray-600">Chứng nhận: {QR_STATIC.certs}</p>
+              <p className="font-semibold text-emerald-700">Nông trại: {farmName}</p>
+              <p className="text-gray-600">Địa chỉ: {address}</p>
+              <p className="text-gray-600">Ngày thu hoạch: {harvestDate}</p>
+              <p className="text-gray-600">Chứng nhận: {certs}</p>
             </div>
 
             <Button onClick={() => setShowQRCode(false)} className="mt-4 w-full h-11 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold">
@@ -448,6 +494,11 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* no-scrollbar utility (optional): thêm vào global css nếu cần
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      */}
     </div>
   );
 }

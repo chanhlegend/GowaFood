@@ -25,4 +25,7 @@ router.delete('/:id/addresses/:addressId', UserController.deleteAddress);
 // Đặt địa chỉ mặc định
 router.put('/:id/addresses/:addressId/default', UserController.setDefaultAddress);
 
+// Thay đổi điểm thưởng
+router.put('/:id/reward-points', UserController.updateRewardPoints);
+
 module.exports = router;

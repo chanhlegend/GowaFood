@@ -223,5 +223,34 @@ class UserController {
             res.status(500).json({ message: 'Lỗi server', error: err.message });
         }
     }
+
+    // Thay đổi điểm thưởng
+    async updateRewardPoints(req, res) {
+        try {
+            const userId = req.params.id;
+            const { pointsChange } = req.body; // Số điểm thay đổi (có thể âm hoặc dương)
+            console.log('Updating reward points for user:', userId, 'Points change:', pointsChange);
+            // cố gắng chuyển đổi pointsChange sang số nếu nó là chuỗi
+            if (pointsChange === undefined) {
+                return res.status(400).json({ message: 'Vui lòng cung cấp pointsChange' });
+            }
+            const parsedPointsChange = Number(pointsChange);
+            if (isNaN(parsedPointsChange)) {
+                return res.status(400).json({ message: 'pointsChange phải là một số hợp lệ' });
+            }
+            if (typeof parsedPointsChange !== 'number') {
+                return res.status(400).json({ message: 'pointsChange phải là một số' });
+            }
+            const user = await User.findById(userId);
+            if (!user) {
+                return res.status(404).json({ message: 'Người dùng không tồn tại' });
+            }
+            user.points = (user.points || 0) + pointsChange;
+            await user.save();
+            res.status(200).json({ message: 'Cập nhật điểm thưởng thành công', data: user.points });
+        } catch (err) {
+            res.status(500).json({ message: 'Lỗi server', error: err.message });
+        }
+    }
 }
 module.exports = new UserController();

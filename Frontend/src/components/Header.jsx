@@ -115,7 +115,7 @@ export function Header() {
   }, [isUserDropdownOpen]);
 
   return (
-    <header className="sticky top-0 z-50 w-full">
+    <header className="sticky top-0 z-1050 w-full">
       {/* Top contact bar */}
       <div className="bg-green-900 text-primary-foreground py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm md:text-base">
         <div className="container mx-auto flex items-center justify-center gap-1.5 sm:gap-2">

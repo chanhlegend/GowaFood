@@ -4,8 +4,6 @@ const OrderController = {
     async createOrder(req, res) {
         try {
             const OrderData = req.body;
-            console.log("Received order data:", OrderData);
-            
             const newOrder = new Order(OrderData);
             const savedOrder = await newOrder.save();
             res.status(201).json({ message: 'Tạo đơn hàng thành công', data: savedOrder });

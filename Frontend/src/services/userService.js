@@ -71,5 +71,17 @@ export const UserService = {
         } catch (error) {
             throw error.response ? error.response.data : new Error("Network Error");
         }
+    },
+
+    // Cập nhật điểm thưởng
+    updateRewardPoints: async (userId, pointsChange) => {
+        try {
+            console.log("Updating reward points:", pointsChange, typeof pointsChange);
+
+            const response = await axios.put(`${API_URL}/${userId}/reward-points`, { pointsChange });
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error("Network Error");
+        }
     }
 };
