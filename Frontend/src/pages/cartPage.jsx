@@ -55,7 +55,7 @@ export default function CartPage() {
     const weight = it.weight || "1KG"; // từ BE trả về
     return {
       // id duy nhất theo biến thể (product + weight)
-      id: `${productId}:${weight}`,
+      id: `${productId}`,
       productId,
       weight,
       name: p.name || "Sản phẩm",
@@ -266,7 +266,7 @@ export default function CartPage() {
 
                     <div className="text-right">
                       <div className="text-emerald-700 font-extrabold">
-                        {formatVND(it.price * (it.qty || 1))}
+                        {it.weight === "1KG" ? formatVND(it.price * (it.qty || 1)) : `${formatVND(it.price*0.5 * (it.qty || 1))}`}
                       </div>
                       <button
                         onClick={() => removeItem(it.id)}
