@@ -8,6 +8,9 @@ router.get("/", orderController.getOrders);
 
 router.get("/:id", orderController.getOrderDetail);
 
-router.delete("/:id", orderController.cancelOrder);
+router.put("/cancel/:id", orderController.cancelOrder);
+
+// lấy order theo product id và user id
+router.get("/byProduct/:productId/:userId", orderController.getOrderByProductAndUser);
 
 module.exports = router;

@@ -73,7 +73,13 @@ async function getOrCreateCart(userId) {
 
 // Lấy userId từ req
 function getUserIdFromReq(req) {
-  return req.user?._id || req.user?.id || req.params.userId || req.body.userId || req.query.userId;
+  return (
+    req.user?._id ||
+    req.user?.id ||
+    req.params.userId ||
+    req.body.userId ||
+    req.query.userId
+  );
 }
 
 // ===== Controller =====
@@ -87,13 +93,22 @@ class CartController {
         return res.status(400).json({ message: "userId không hợp lệ" });
       }
 
-      const cart = await Cart.findOne({ user: userId }).populate("items.product");
+      const cart = await Cart.findOne({ user: userId }).populate(
+        "items.product"
+      );
       return res.status(200).json(toResponse(cart));
     } catch (err) {
-      if (err.name === 'ValidationError') {
-        return res.status(400).json({ message: "Dữ liệu giỏ hàng không hợp lệ", error: err.message });
+      if (err.name === "ValidationError") {
+        return res
+          .status(400)
+          .json({
+            message: "Dữ liệu giỏ hàng không hợp lệ",
+            error: err.message,
+          });
       }
-      return res.status(500).json({ message: "Lỗi server", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Lỗi server", error: err.message });
     }
   }
 
@@ -110,22 +125,27 @@ class CartController {
 
       const normWeight = normalizeWeight(weight);
       if (!normWeight || !ALLOWED_WEIGHTS.includes(normWeight)) {
-        return res.status(400).json({ message: "weight phải là 500G hoặc 1KG" });
+        return res
+          .status(400)
+          .json({ message: "weight phải là 500G hoặc 1KG" });
       }
 
       const qty = normalizeQty(quantity);
 
       const product = await Product.findById(productId);
-      if (!product) return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+      if (!product)
+        return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
 
       const cart = await getOrCreateCart(userId);
 
       // Tìm theo (product + weight)
       const idx = cart.items.findIndex(
-        (it) => String(it.product) === String(productId) && it.weight === normWeight
+        (it) =>
+          String(it.product) === String(productId) && it.weight === normWeight
       );
 
-      const availableStock = typeof product.stock === "number" ? product.stock : undefined;
+      const availableStock =
+        typeof product.stock === "number" ? product.stock : undefined;
 
       if (idx > -1) {
         const newQty = cart.items[idx].quantity + qty;
@@ -142,7 +162,7 @@ class CartController {
 
       // 🔧 HOTFIX: backfill item cũ thiếu weight để tránh ValidationError
       for (const it of cart.items) {
-        if (!it.weight) it.weight = '1KG';
+        if (!it.weight) it.weight = "1KG";
       }
 
       await cart.save();
@@ -153,10 +173,17 @@ class CartController {
         ...toResponse(populated),
       });
     } catch (err) {
-      if (err.name === 'ValidationError') {
-        return res.status(400).json({ message: "Dữ liệu giỏ hàng không hợp lệ", error: err.message });
+      if (err.name === "ValidationError") {
+        return res
+          .status(400)
+          .json({
+            message: "Dữ liệu giỏ hàng không hợp lệ",
+            error: err.message,
+          });
       }
-      return res.status(500).json({ message: "Lỗi server", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Lỗi server", error: err.message });
     }
   }
 
@@ -173,21 +200,27 @@ class CartController {
 
       const normWeight = normalizeWeight(weight);
       if (!normWeight || !ALLOWED_WEIGHTS.includes(normWeight)) {
-        return res.status(400).json({ message: "weight phải là 500G hoặc 1KG" });
+        return res
+          .status(400)
+          .json({ message: "weight phải là 500G hoặc 1KG" });
       }
 
       const qty = normalizeQty(quantity);
 
       const product = await Product.findById(productId);
-      if (!product) return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+      if (!product)
+        return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
 
       const cart = await getOrCreateCart(userId);
 
       const idx = cart.items.findIndex(
-        (it) => String(it.product) === String(productId) && it.weight === normWeight
+        (it) =>
+          String(it.product) === String(productId) && it.weight === normWeight
       );
       if (idx === -1) {
-        return res.status(404).json({ message: "Sản phẩm/biến thể không có trong giỏ" });
+        return res
+          .status(404)
+          .json({ message: "Sản phẩm/biến thể không có trong giỏ" });
       }
 
       const limited = Math.min(qty, product.stock ?? qty);
@@ -195,7 +228,7 @@ class CartController {
 
       // 🔧 HOTFIX: backfill legacy
       for (const it of cart.items) {
-        if (!it.weight) it.weight = '1KG';
+        if (!it.weight) it.weight = "1KG";
       }
 
       await cart.save();
@@ -206,10 +239,17 @@ class CartController {
         ...toResponse(populated),
       });
     } catch (err) {
-      if (err.name === 'ValidationError') {
-        return res.status(400).json({ message: "Dữ liệu giỏ hàng không hợp lệ", error: err.message });
+      if (err.name === "ValidationError") {
+        return res
+          .status(400)
+          .json({
+            message: "Dữ liệu giỏ hàng không hợp lệ",
+            error: err.message,
+          });
       }
-      return res.status(500).json({ message: "Lỗi server", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Lỗi server", error: err.message });
     }
   }
 
@@ -226,23 +266,30 @@ class CartController {
 
       const normWeight = normalizeWeight(req.body?.weight ?? req.query?.weight);
       if (!normWeight || !ALLOWED_WEIGHTS.includes(normWeight)) {
-        return res.status(400).json({ message: "weight phải là 500G hoặc 1KG" });
+        return res
+          .status(400)
+          .json({ message: "weight phải là 500G hoặc 1KG" });
       }
 
       const cart = await getOrCreateCart(userId);
       const before = cart.items.length;
 
       cart.items = cart.items.filter(
-        (it) => !(String(it.product) === String(productId) && it.weight === normWeight)
+        (it) =>
+          !(
+            String(it.product) === String(productId) && it.weight === normWeight
+          )
       );
 
       if (cart.items.length === before) {
-        return res.status(404).json({ message: "Sản phẩm/biến thể không có trong giỏ" });
+        return res
+          .status(404)
+          .json({ message: "Sản phẩm/biến thể không có trong giỏ" });
       }
 
       // 🔧 HOTFIX: backfill legacy
       for (const it of cart.items) {
-        if (!it.weight) it.weight = '1KG';
+        if (!it.weight) it.weight = "1KG";
       }
 
       await cart.save();
@@ -253,10 +300,17 @@ class CartController {
         ...toResponse(populated),
       });
     } catch (err) {
-      if (err.name === 'ValidationError') {
-        return res.status(400).json({ message: "Dữ liệu giỏ hàng không hợp lệ", error: err.message });
+      if (err.name === "ValidationError") {
+        return res
+          .status(400)
+          .json({
+            message: "Dữ liệu giỏ hàng không hợp lệ",
+            error: err.message,
+          });
       }
-      return res.status(500).json({ message: "Lỗi server", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Lỗi server", error: err.message });
     }
   }
 
@@ -277,10 +331,64 @@ class CartController {
         ...toResponse(cart),
       });
     } catch (err) {
-      if (err.name === 'ValidationError') {
-        return res.status(400).json({ message: "Dữ liệu giỏ hàng không hợp lệ", error: err.message });
+      if (err.name === "ValidationError") {
+        return res
+          .status(400)
+          .json({
+            message: "Dữ liệu giỏ hàng không hợp lệ",
+            error: err.message,
+          });
       }
-      return res.status(500).json({ message: "Lỗi server", error: err.message });
+      return res
+        .status(500)
+        .json({ message: "Lỗi server", error: err.message });
+    }
+  }
+  async getItemCount(req, res) {
+    try {
+      const { userId } = req.params;
+      if (!userId) return res.status(400).json({ message: "Thiếu userId" });
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "userId không hợp lệ" });
+      }
+
+      // Không cần populate ở đây
+      const cart = await Cart.findOne(
+        { user: userId },
+        { items: 1, _id: 0 }
+      ).lean();
+
+      const items = Array.isArray(cart?.items) ? cart.items : [];
+
+      // Lọc dữ liệu xấu & quantity <= 0
+      const valid = items.filter(
+        (it) =>
+          it &&
+          it.product &&
+          mongoose.Types.ObjectId.isValid(it.product) &&
+          (it.weight === "500G" || it.weight === "1KG") &&
+          ((typeof it.quantity === "number" && it.quantity > 0) ||
+            typeof it.quantity === "undefined")
+      );
+
+      // Đếm unique theo cặp (product, weight)
+      const uniq = new Set(
+        valid.map((it) => `${String(it.product)}|${it.weight}`)
+      );
+
+      return res.status(200).json({ itemCount: uniq.size });
+    } catch (err) {
+      if (err?.name === "ValidationError") {
+        return res
+          .status(400)
+          .json({
+            message: "Dữ liệu giỏ hàng không hợp lệ",
+            error: err.message,
+          });
+      }
+      return res
+        .status(500)
+        .json({ message: "Lỗi server", error: err.message });
     }
   }
 }

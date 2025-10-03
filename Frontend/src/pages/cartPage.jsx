@@ -197,8 +197,8 @@ export default function CartPage() {
 
       {/* Title banner */}
       <div className="max-w-6xl mx-auto px-4">
-        <div className="mt-6 rounded-xl bg-lime-200/70 text-center py-5">
-          <h1 className="text-xl md:text-2xl font-extrabold tracking-wide text-emerald-900">
+        <div className="mt-6 rounded-xl bg-lime-200/50 text-center py-5">
+          <h1 className="text-xl md:text-2xl font-extrabold tracking-wide text-custom-green">
             GIỎ HÀNG CỦA BẠN
           </h1>
         </div>
@@ -209,7 +209,7 @@ export default function CartPage() {
         {/* LEFT: items + notes + policies */}
         <div className="lg:col-span-2 space-y-4">
           {/* Hint bar */}
-          <div className="rounded-full bg-lime-200/80 text-emerald-900 px-4 py-2 text-sm">
+          <div className="rounded-full bg-lime-200/50 text-emerald-900 px-4 py-2 text-sm">
             {loading ? "Đang tải giỏ hàng..." : <>Bạn đang có <b>{items.length}</b> sản phẩm trong giỏ hàng</>}
           </div>
 
@@ -281,31 +281,6 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* Notes + policies */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div className="rounded-xl border bg-gray-50">
-              <div className="px-4 py-3 border-b font-semibold">Ghi chú đơn hàng</div>
-              <div className="p-4">
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Ví dụ: Giao giờ hành chính, không gọi sau 9h tối..."
-                  rows={5}
-                  className="w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/30"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-xl border bg-gray-50">
-              <div className="px-4 py-3 border-b font-semibold">Chính sách mua hàng</div>
-              <div className="p-4 space-y-2 text-sm text-gray-700">
-                <PolicyItem icon={<Truck className="h-4 w-4" />} text="Giao nhanh tận nơi" />
-                <PolicyItem icon={<ShieldCheck className="h-4 w-4" />} text="Tư vấn sử dụng miễn phí" />
-                <PolicyItem icon={<Phone className="h-4 w-4" />} text="Hotline: 0899327766 (zalo/viber/whatsapp)" />
-                <PolicyItem icon={<Phone className="h-4 w-4" />} text="PKD B2B: 0899317766" />
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* RIGHT: order summary */}
@@ -334,32 +309,6 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Coupon */}
-              <div className="px-4 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Tag className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      className="w-full rounded-lg border pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/30"
-                      placeholder="Nhập mã giảm giá (SUNI10 / SAVE20K)"
-                      value={coupon}
-                      onChange={(e) => setCoupon(e.target.value)}
-                    />
-                  </div>
-                  <Button onClick={applyCoupon} className="h-10 rounded-lg">
-                    Áp dụng
-                  </Button>
-                </div>
-                {couponApplied === null && coupon.trim() && (
-                  <p className="mt-2 text-xs text-red-500">Mã không hợp lệ hoặc đã hết hạn</p>
-                )}
-                {couponApplied && (
-                  <p className="mt-2 text-xs text-emerald-600">
-                    Đã áp dụng mã <b>{couponApplied.code}</b>
-                  </p>
-                )}
-              </div>
-
               {/* Totals */}
               <div className="px-4 py-3 border-t space-y-1 text-sm">
                 <Row label="Tạm tính" value={formatVND(subtotal)} />
@@ -378,7 +327,7 @@ export default function CartPage() {
               <div className="px-4 pb-4">
                 <Button
                   onClick ={ () => handlePayment() }
-                className="w-full h-12 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800">
+                className="w-full h-12 rounded-lg bg-custom-green text-white hover:bg-emerald-800">
                   THANH TOÁN
                 </Button>
                 <button

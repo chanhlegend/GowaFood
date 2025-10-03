@@ -16,13 +16,14 @@ import {
 import Logo from "../assets/images/logo.png";
 
 import { CategoryService } from "../services/categoryService";
-import { href } from "react-router-dom";
+import { CartService } from "../services/cartService";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [cartItemCount, setCartItemCount] = useState(0);
   const userDropdownRef = useRef(null);
 
   const [categories, setCategories] = useState([]);
@@ -31,7 +32,6 @@ export function Header() {
     const fetchCategories = async () => {
       try {
         const response = await CategoryService.getAllCategories();
-        console.log("Fetched categories:", response);
 
         // Giả sử API trả { data: [...] }
         const cats = Array.isArray(response)
@@ -75,9 +75,21 @@ export function Header() {
 
   // Kiểm tra trạng thái đăng nhập từ localStorage
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       const userData = localStorage.getItem("user_gowa");
       setIsLoggedIn(!!userData);
+
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          console.log("user from localStorage:", user._id);
+
+          const itemCount = await CartService.getItemCount(user._id);
+          setCartItemCount(itemCount || 0);
+        } catch (error) {
+          console.error("Failed to parse user data:", error);
+        }
+      }
     };
 
     checkAuthStatus();
@@ -298,7 +310,7 @@ export function Header() {
                           animate-pulse
                         "
                     >
-                      0
+                      {cartItemCount}
                     </div>
                     <span className="sr-only">Giỏ hàng</span>
                   </Button>
