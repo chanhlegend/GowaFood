@@ -12,4 +12,6 @@ router.delete('/item/:productId', cartController.removeItem);
 
 router.delete('/clear',  cartController.clearCart);
 
+router.get('/count/:userId', cartController.getItemCount);
+
 module.exports = router;

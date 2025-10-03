@@ -104,4 +104,13 @@ export const CartService = {
       handleError(error);
     }
   },
+
+  async getItemCount(userId) {
+    try {
+      const res = await axios.get(`${API_URL}/count/${userId}`);
+      return res.data?.itemCount || 0;
+    } catch (error) {
+      handleError(error);
+    }
+  },
 };

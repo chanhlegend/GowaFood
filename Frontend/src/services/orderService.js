@@ -66,10 +66,12 @@ const OrderService = {
     }
   },
 
-  cancelOrder: async (orderId, userId) => {
+  cancelOrder: async (orderId) => {
+    console.log("Canceling order with ID:", orderId);
+    
     try {
-      const response = await axios.delete(
-        `${API_URL}/${orderId}?userId=${userId}`
+      const response = await axios.put(
+        `${API_URL}/cancel/${orderId}`
       );
       return {
         success: true,
@@ -77,9 +79,26 @@ const OrderService = {
         message: response.data.message || "Hủy đơn hàng thành công",
       };
     } catch (error) {
+      console.log(error);
       return {
         success: false,
         message: error.response?.data?.message || "Không thể hủy đơn hàng",
+      };
+    }
+  },
+
+  getOrderByProductAndUser: async (productId, userId) => {
+    try {
+      const response = await axios.get(`${API_URL}/byProduct/${productId}/${userId}`);
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message || "Lấy đơn hàng theo sản phẩm và người dùng thành công",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Không thể lấy đơn hàng theo sản phẩm và người dùng",
       };
     }
   },

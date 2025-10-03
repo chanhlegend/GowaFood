@@ -16,7 +16,7 @@ const menuItems = [
   },
   {
     label: "• Đơn hàng của bạn",
-    path: "/profile/orders",
+    path: "/orders",
   },
 ];
 
