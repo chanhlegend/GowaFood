@@ -6,7 +6,7 @@ import ProfileLayout from "../layouts/ProfileLayout";
 const RegisterPage = React.lazy(() => import("../pages/registerPage"));
 const LoginPage = React.lazy(() => import("../pages/loginPage"));
 const VerifyPage = React.lazy(() => import("../pages/verifyOTPPage"));
-const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
+const ProfilePage = React.lazy(() => import("../pages/profilePage"));
 const AddressManagePage = React.lazy(() => import("../pages/addressManagePage"));
 const ChatRecipeAIPage = React.lazy(() => import("../pages/chatRecipeAI"));
 const ProductDetailPage = React.lazy(() => import("../pages/productDetailPage"));
