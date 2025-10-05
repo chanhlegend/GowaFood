@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "/api/auth";
+const API_URL = "https://gowafood.onrender.com/api/auth";
 
 export const UserService = {
   register: async (userData) => {
