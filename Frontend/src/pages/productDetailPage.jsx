@@ -12,8 +12,8 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProductService } from "@/services/ProductService";
-import { CartService } from "@/services/CartService";
+import { ProductService } from "@/services/productService";
+import { CartService } from "@/services/cartService";
 import OrderService from "../services/orderService";
 import Reviews from "@/components/Reviews";
 
