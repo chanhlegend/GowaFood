@@ -6,7 +6,7 @@ import {
   Tag, Truck, ShieldCheck, Phone, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CartService } from "@/services/CartService";
+import { CartService } from "@/services/cartService";
 
 // === Cấu hình (tuỳ môi trường) ===
 // Nếu server đã có auth -> để null (server lấy req.user)
