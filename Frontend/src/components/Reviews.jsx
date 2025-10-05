@@ -8,7 +8,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ReviewService } from "@/services/ReviewService";
+import { ReviewService } from "@/services/reviewService";
 import { toast } from "sonner";
 const SORTS = [
   { key: "newest", label: "Mới nhất" },
