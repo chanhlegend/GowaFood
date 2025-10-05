@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "/api/payos";
+const API_URL = "https://gowafood.onrender.com/api/payos";
 
 export const PayOSService = {
   createPayment: async (paymentData) => {
