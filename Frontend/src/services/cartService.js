@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://gowafood.onrender.com/api/cart";
+const API_URL = "api/cart";
 
 function handleError(error) {
   throw (error?.response?.data) ?? new Error("Network Error");

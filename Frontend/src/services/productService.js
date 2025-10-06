@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://gowafood.onrender.com/api/products";
+const API_URL = "api/products";
 
 export const ProductService = {
     // Lấy danh sách tất cả sản phẩm
