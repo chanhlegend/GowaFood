@@ -1,7 +1,7 @@
 // src/services/ReviewService.js
 import axios from "axios";
 
-const API_URL = "https://gowafood.onrender.com/api/reviews";
+const API_URL = "api/reviews";
 
 function handleError(error) {
   // quăng lên message từ server nếu có

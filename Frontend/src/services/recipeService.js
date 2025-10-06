@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://gowafood.onrender.com/api/recipes";
+const API_URL = "api/recipes";
 
 export const RecipeService = {
     // Lấy công thức từ AI dựa trên nguyên liệu

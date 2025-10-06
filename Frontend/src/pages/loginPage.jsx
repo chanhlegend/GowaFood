@@ -61,7 +61,7 @@ const LoginForm = () => {
 
   const handleGoogleLogin = () => {
     // Chuyển hướng sang backend Google OAuth endpoint
-    window.location.href = "http://localhost:3000/auth/google";
+    window.location.href = "https://gowafood.onrender.com/auth/google";
   }
 
   return (
