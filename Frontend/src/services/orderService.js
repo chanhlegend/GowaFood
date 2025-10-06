@@ -1,6 +1,7 @@
 import axios from "axios";
+import API_BASE_URL from "@/config/api";
 
-const API_URL = "api/orders";
+const API_URL = `${API_BASE_URL}/api/orders`;
 
 const OrderService = {
   createOrder: async (orderData) => {

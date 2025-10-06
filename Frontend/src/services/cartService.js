@@ -1,6 +1,7 @@
 import axios from "axios";
+import API_BASE_URL from "@/config/api";
 
-const API_URL = "api/cart";
+const API_URL = `${API_BASE_URL}/api/cart`;
 
 function handleError(error) {
   throw (error?.response?.data) ?? new Error("Network Error");

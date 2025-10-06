@@ -1,6 +1,7 @@
 import axios from "axios";
+import API_BASE_URL from "@/config/api";
 
-const API_URL = "api/categories";
+const API_URL = `${API_BASE_URL}/api/categories`;
 
 export const CategoryService = {
     // Lấy danh sách tất cả danh mục

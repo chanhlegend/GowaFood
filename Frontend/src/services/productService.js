@@ -1,6 +1,7 @@
 import axios from "axios";
+import API_BASE_URL from "@/config/api";
 
-const API_URL = "api/products";
+const API_URL = `${API_BASE_URL}/api/products`;
 
 export const ProductService = {
     // Lấy danh sách tất cả sản phẩm
