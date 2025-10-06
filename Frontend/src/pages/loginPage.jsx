@@ -145,15 +145,22 @@ const LoginForm = () => {
           <span className="text-gray-600">Bạn chưa có tài khoản ? </span>
           <button
             type="button"
-            className="text-blue-500 hover:text-blue-600 font-medium focus:outline-none bg-transparent border-none p-0"
+            className="text-blue-500 hover:text-blue-600 font-medium focus:outline-none bg-transparent border-none p-0 cursor-pointer"
             onClick={() => appNavigate("/register")}
           >
             Đăng ký ngay
           </button>
           <div className="mt-2">
-            <a href="#" className="text-blue-500 hover:text-blue-600 font-medium">
+            <button
+              type="button"
+              className="text-blue-500 hover:text-blue-600 font-medium focus:outline-none bg-transparent border-none p-0 cursor-pointer"
+              onClick={() => {
+                // TODO: Implement forgot password functionality
+                toast.info("Tính năng đang được phát triển");
+              }}
+            >
               Quên mật khẩu ?
-            </a>
+            </button>
           </div>
         </div>
       </div>
