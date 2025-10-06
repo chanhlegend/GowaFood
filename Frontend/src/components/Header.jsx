@@ -1,6 +1,7 @@
 // src/components/Header.jsx
 
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Menu,
@@ -19,6 +20,7 @@ import { CategoryService } from "../services/categoryService";
 import { CartService } from "../services/cartService";
 
 export function Header() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -150,7 +152,7 @@ export function Header() {
         <div className="bg-background/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center justify-between h-20 sm:h-24 lg:h-28 px-4 sm:px-6 lg:px-10">
             {/* Logo */}
-            <a href="/" className="flex items-center gap-3 sm:gap-4 group">
+            <button onClick={() => navigate("/")} className="flex items-center gap-3 sm:gap-4 group cursor-pointer">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300" />
                 <div className="relative bg-green-900 rounded-full p-1.5 sm:p-2 group-hover:scale-110 transition-transform duration-300">
@@ -169,21 +171,21 @@ export function Header() {
                   Food
                 </span>
               </div>
-            </a>
+            </button>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1.5 lg:gap-3">
               {navigationItems.map((item) => (
-                <a
+                <button
                   key={item.name}
-                  href={item.href}
+                  onClick={() => navigate(item.href)}
                   className="
                       relative px-3 py-2 lg:px-6 lg:py-3
                       text-sm lg:text-[18px] font-semibold text-green-800
                       rounded-lg transition-all duration-300 ease-in-out
                       hover:bg-muted hover:text-green-700 hover:scale-[1.03]
                       focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2
-                      group
+                      group cursor-pointer
                     "
                 >
                   <span className="relative z-10">{item.name}</span>
@@ -194,7 +196,7 @@ export function Header() {
                         transition-opacity duration-300 ease-in-out
                       "
                   />
-                </a>
+                </button>
               ))}
             </nav>
 
@@ -230,30 +232,33 @@ export function Header() {
                           animate-in slide-in-from-top-2 duration-200
                         "
                       >
-                        <a
-                          href="/profile"
+                        <button
                           className="
-                              flex items-center gap-3 px-4 py-3 text-sm text-gray-700
+                              w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700
                               hover:bg-gray-50 hover:text-green-700
                               transition-colors duration-200
                             "
-                          onClick={() => setIsUserDropdownOpen(false)}
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            navigate('/profile');
+                          }}
                         >
                           <UserCircle className="h-4 w-4" />
                           Hồ sơ cá nhân
-                        </a>
-                        <a
-                          href="/orders"
+                        </button>
+                        <button
                           className="
-                           flex items-center gap-3 px-4 py-3 text-sm text-gray-700
+                           w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700
                            hover:bg-gray-50 hover:text-green-700
                             transition-colors duration-200  "
-
-                          onClick={() => setIsUserDropdownOpen(false)}
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            navigate('/orders');
+                          }}
                         >
                           <ClipboardList className="h-4 w-4" />
                           Theo dõi đơn hàng
-                        </a>
+                        </button>
                         <button
                           className="
                               w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700
@@ -267,7 +272,7 @@ export function Header() {
                             // Cập nhật trạng thái đăng nhập
                             setIsLoggedIn(false);
                             // Chuyển hướng về trang home
-                            window.location.href = '/'
+                            navigate('/');
                           }}
                         >
                           <LogOut className="h-4 w-4" />
@@ -277,7 +282,7 @@ export function Header() {
                     )}
                   </div>
                   <Button
-                    onClick={() => { window.location.href = "/orders"; }}
+                    onClick={() => navigate("/orders")}
                     variant="ghost"
                     size="icon"
                     className="
@@ -292,7 +297,7 @@ export function Header() {
                   </Button>
                   {/* Shopping Cart */}
                   <Button
-                    onClick={() => { window.location.href = "/cart"; }}
+                    onClick={() => navigate("/cart")}
                     variant="ghost"
                     size="icon"
                     className="
@@ -325,10 +330,7 @@ export function Header() {
                       transition-all duration-300 ease-in-out
                       focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                     "
-                  onClick={() => {
-                    // Chuyển đến trang login
-                    window.location.href = "/login";
-                  }}
+                  onClick={() => navigate("/login")}
                 >
                   <LogIn className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
                   <span className="sr-only">Đăng nhập</span>
@@ -409,18 +411,20 @@ export function Header() {
           {/* Navigation */}
           <nav className="flex flex-col gap-2 sm:gap-3">
             {navigationItems.map((item) => (
-              <a
+              <button
                 key={item.name}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  navigate(item.href);
+                }}
                 className="
-                  px-4 py-3 text-base sm:text-lg lg:text-xl font-semibold text-green-800
+                  w-full text-left px-4 py-3 text-base sm:text-lg lg:text-xl font-semibold text-green-800
                   rounded-lg transition-all duration-300 ease-in-out
                   hover:bg-muted hover:text-green-700 hover:translate-x-2
                 "
               >
                 {item.name}
-              </a>
+              </button>
             ))}
           </nav>
 
@@ -428,43 +432,47 @@ export function Header() {
           <div className="mt-6 pt-6 border-t border-gray-200">
             {isLoggedIn ? (
               <div className="flex flex-col gap-2">
-                <a
-                  href="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    navigate('/profile');
+                  }}
                   className="
-                    flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+                    w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
                     rounded-lg transition-all duration-300 ease-in-out
                     hover:bg-muted hover:text-green-700 hover:translate-x-2
                   "
                 >
                   <UserCircle className="h-5 w-5" />
                   Hồ sơ cá nhân
-                </a>
+                </button>
 
-                <a
-                  href="/orders"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    navigate('/orders');
+                  }}
                   className="
-    flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+    w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
     rounded-lg transition-all duration-300 ease-in-out
     hover:bg-muted hover:text-green-700 hover:translate-x-2
   "
                 >
                   <ClipboardList className="h-5 w-5" />
                   Theo dõi đơn hàng
-                </a>
+                </button>
                 <button
                   onClick={() => {
-                    setIsMobileMenuOpen(false)
+                    setIsMobileMenuOpen(false);
                     // Xóa dữ liệu user khỏi localStorage
-                    localStorage.removeItem('user_gowa')
+                    localStorage.removeItem('user_gowa');
                     // Cập nhật trạng thái đăng nhập
-                    setIsLoggedIn(false)
+                    setIsLoggedIn(false);
                     // Chuyển hướng về trang home
-                    window.location.href = '/'
+                    navigate('/');
                   }}
                   className="
-                    flex items-center gap-3 px-4 py-3 text-base font-semibold text-red-600
+                    w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-red-600
                     rounded-lg transition-all duration-300 ease-in-out
                     hover:bg-red-50 hover:translate-x-2
                   "
@@ -476,11 +484,11 @@ export function Header() {
             ) : (
               <button
                 onClick={() => {
-                  setIsMobileMenuOpen(false)
-                  window.location.href = '/login'
+                  setIsMobileMenuOpen(false);
+                  navigate('/login');
                 }}
                 className="
-                  flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+                  w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
                   rounded-lg transition-all duration-300 ease-in-out
                   hover:bg-muted hover:text-green-700 hover:translate-x-2
                 "
