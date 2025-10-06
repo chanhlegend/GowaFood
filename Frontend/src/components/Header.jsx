@@ -91,20 +91,30 @@ export function Header() {
         } catch (error) {
           console.error("Failed to parse user data:", error);
         }
+      } else {
+        // Reset cart count khi đăng xuất
+        setCartItemCount(0);
       }
     };
 
     checkAuthStatus();
 
-    // Lắng nghe sự kiện storage để cập nhật khi có thay đổi
+    // Lắng nghe sự kiện storage để cập nhật khi có thay đổi từ tab khác
     const handleStorageChange = () => {
       checkAuthStatus();
     };
 
+    // Lắng nghe custom event để cập nhật khi đăng nhập/đăng xuất trong cùng tab
+    const handleAuthChange = () => {
+      checkAuthStatus();
+    };
+
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("authChange", handleAuthChange);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("authChange", handleAuthChange);
     };
   }, []);
 
@@ -269,8 +279,12 @@ export function Header() {
                             setIsUserDropdownOpen(false);
                             // Xóa dữ liệu user khỏi localStorage
                             localStorage.removeItem("user_gowa");
+                            localStorage.removeItem("token_gowa");
+                            // Trigger custom event để cập nhật UI
+                            window.dispatchEvent(new Event('authChange'));
                             // Cập nhật trạng thái đăng nhập
                             setIsLoggedIn(false);
+                            setCartItemCount(0);
                             // Chuyển hướng về trang home
                             navigate('/');
                           }}
@@ -466,8 +480,12 @@ export function Header() {
                     setIsMobileMenuOpen(false);
                     // Xóa dữ liệu user khỏi localStorage
                     localStorage.removeItem('user_gowa');
+                    localStorage.removeItem('token_gowa');
+                    // Trigger custom event để cập nhật UI
+                    window.dispatchEvent(new Event('authChange'));
                     // Cập nhật trạng thái đăng nhập
                     setIsLoggedIn(false);
+                    setCartItemCount(0);
                     // Chuyển hướng về trang home
                     navigate('/');
                   }}
