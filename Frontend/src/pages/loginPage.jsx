@@ -25,6 +25,8 @@ const LoginForm = () => {
         .then((res) => {
           if (res.user) {
             localStorage.setItem('user_gowa', JSON.stringify(res.user));
+            // Trigger custom event để Header cập nhật
+            window.dispatchEvent(new Event('authChange'));
           }
         })
         .catch(() => {})
@@ -49,7 +51,9 @@ const LoginForm = () => {
       const user = await UserService.login({ email, password });
       // Lưu user vào localStorage
       localStorage.setItem("user_gowa", JSON.stringify(user.user));
-  toast.success("Đăng nhập thành công!");
+      // Trigger custom event để Header cập nhật
+      window.dispatchEvent(new Event('authChange'));
+      toast.success("Đăng nhập thành công!");
       setTimeout(() => {
         appNavigate(ROUTE_PATH.HOME);
       }, 1500);
