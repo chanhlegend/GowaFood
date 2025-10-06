@@ -1,7 +1,8 @@
 // src/services/ReviewService.js
 import axios from "axios";
+import API_BASE_URL from "@/config/api";
 
-const API_URL = "api/reviews";
+const API_URL = `${API_BASE_URL}/api/reviews`;
 
 function handleError(error) {
   // quăng lên message từ server nếu có

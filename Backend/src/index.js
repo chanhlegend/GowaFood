@@ -1,6 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const methodOverride = require('method-override');
+const cors = require('cors');
 const dotenv = require('dotenv');
 const app = express();
 const route = require('./routes');
@@ -12,7 +13,14 @@ dotenv.config();
 // Kết nối DB
 db.connect();
 
-
+// CORS Configuration
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true, // Cho phép gửi cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));

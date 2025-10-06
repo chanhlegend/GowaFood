@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { UserService } from "../services/authenService"
 import { ROUTE_PATH } from "../constants/routePath"
 import { toast } from "sonner"
+import API_BASE_URL from "@/config/api"
 import "./css/loginPage.css"
 
 const LoginForm = () => {
@@ -61,7 +62,8 @@ const LoginForm = () => {
 
   const handleGoogleLogin = () => {
     // Chuyển hướng sang backend Google OAuth endpoint
-    window.location.href = "https://gowafood.onrender.com/auth/google";
+    const googleAuthUrl = API_BASE_URL ? `${API_BASE_URL}/auth/google` : '/auth/google';
+    window.location.href = googleAuthUrl;
   }
 
   return (

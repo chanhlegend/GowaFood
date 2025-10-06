@@ -1,6 +1,7 @@
 import axios from "axios";
+import API_BASE_URL from "@/config/api";
 
-const API_URL = "api/recipes";
+const API_URL = `${API_BASE_URL}/api/recipes`;
 
 export const RecipeService = {
     // Lấy công thức từ AI dựa trên nguyên liệu
