@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { UserService } from "../services/userService";
 import { ROUTE_PATH } from "../constants/routePath";
 
+import { toast } from "sonner";
+
 const Pill = ({ active, onClick, children }) => (
   <button
     type="button"
@@ -77,8 +79,6 @@ const PaymentPage = () => {
   }, []);
 
   useEffect(() => {
-    console.log("PaymentPage state:", { stateItems, stateSubtotal, stateTotal });
-    console.log("Normalized items:", location.state?.items);
     
     const fetchUserInfo = async () => {
       try {
@@ -149,6 +149,11 @@ const PaymentPage = () => {
 
   /* ===== Handlers ===== */
   const handlePlaceOrder = () => {
+    if ( shippingMethod === "HOME" && addresses.length === 0 ) {
+      toast.error("Vui lòng thêm địa chỉ nhận hàng.");
+      navigate(ROUTE_PATH.ADDRESS_MANAGE);
+      return;
+    }
     const selectedAddress =
       shippingMethod === "HOME" ? addresses[selectedAddressIdx] : null;
 
@@ -277,7 +282,10 @@ const PaymentPage = () => {
               <Card
                 title="Chọn địa chỉ nhận hàng"
                 right={
-                  <button className="text-sm text-gray-600 hover:text-black transition">
+                  <button 
+                  className="text-sm text-gray-600 hover:text-black transition cursor-pointer"
+                  onClick={() => navigate(ROUTE_PATH.ADDRESS_MANAGE)}
+                  >
                     + Thêm địa chỉ
                   </button>
                 }

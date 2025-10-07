@@ -9,6 +9,9 @@ import banner3 from "../assets/images/banner_img_3.png";
 import slideshow1 from "../assets/images/slideshow_1.jpg";
 import slideshow2 from "../assets/images/slideshow_2.jpg";
 
+import { ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
+
 const slides = [
   {
     id: 1,
@@ -124,17 +127,26 @@ function HeroCarousel() {
       {/* Nút prev/next */}
       <button
         onClick={prev}
-        className="cursor-pointer absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow w-10 h-10 flex items-center justify-center hover:bg-green-100 transition"
+        className="cursor-pointer absolute left-3 top-1/2 -translate-y-1/2
+             bg-custom-green/60 rounded-full shadow w-10 h-10
+             hover:bg-custom-green/70 transition
+             border border-slate-200 text-white
+             flex items-center justify-center"
         aria-label="Trước"
       >
-        ‹
+        <ChevronLeftIcon className="w-6 h-6" />
       </button>
+
       <button
         onClick={next}
-        className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow w-10 h-10 flex items-center justify-center hover:bg-green-100 transition"
+        className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2
+             bg-custom-green/60 rounded-full shadow w-10 h-10
+             hover:bg-custom-green/70 transition
+             border border-slate-200 text-white
+             flex items-center justify-center"
         aria-label="Sau"
       >
-        ›
+        <ChevronRightIcon className="w-6 h-6" />
       </button>
 
       {/* Dots */}
@@ -242,7 +254,7 @@ export default function HomePage() {
       <HeroCarousel />
 
       {/* Thanh tìm kiếm toàn trang */}
-      <section className="sticky top-3 z-20 mb-8">
+      <section className="top-3 z-20 mb-8">
         <div className="backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/95 rounded-2xl border border-slate-200 shadow-lg ring-1 ring-slate-900/5 p-4">
           <div className="flex items-center gap-3">
             <div className="relative w-full">
@@ -350,7 +362,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
+            <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-5">
               {g.items.slice(0, 8).map((p) => {
                 const img = (Array.isArray(p.images) && p.images[0]?.url) || "";
                 return (

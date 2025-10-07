@@ -36,9 +36,7 @@ export function Header() {
         const response = await CategoryService.getAllCategories();
 
         // Giả sử API trả { data: [...] }
-        const cats = Array.isArray(response)
-          ? response
-          : response || [];
+        const cats = Array.isArray(response) ? response : response || [];
         setCategories(cats);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
@@ -53,9 +51,9 @@ export function Header() {
     { name: "Trang chủ", href: "/" },
     ...(Array.isArray(categories)
       ? categories.map((cat) => ({
-        name: cat.name,
-        href: `/food-by-category/${cat._id}`,
-      }))
+          name: cat.name,
+          href: `/food-by-category/${cat._id}`,
+        }))
       : []),
     { name: "Công thức AI", href: "/chat-recipe-ai" },
     // { name: "Giới thiệu", href: "/aboutus" },
@@ -140,17 +138,6 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-1050 w-full">
-      {/* Top contact bar */}
-      <div className="bg-green-900 text-primary-foreground py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm md:text-base">
-        <div className="container mx-auto flex items-center justify-center gap-1.5 sm:gap-2">
-          <Phone className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 " />
-          <span className="text-sm font-medium text-center text-white">
-            Chuyên cung cấp sỉ trau củ quả sạch an toàn - Hotline: 0349 544 688
-            - 0379 588 499
-          </span>
-        </div>
-      </div>
-
       {/* Main header */}
       <div
         className={`
@@ -159,10 +146,13 @@ export function Header() {
           ${isScrolled ? "shadow-lg" : "shadow-sm"}
         `}
       >
-        <div className="bg-background/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between h-20 sm:h-24 lg:h-28 px-4 sm:px-6 lg:px-10">
+        <div className="bg-background/80 backdrop-blur-sm rounded-b-3xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between h-20 sm:h-20 lg:h-20 px-4 sm:px-6 lg:px-10">
             {/* Logo */}
-            <button onClick={() => navigate("/")} className="flex items-center gap-3 sm:gap-4 group cursor-pointer">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-3 sm:gap-4 group cursor-pointer"
+            >
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300" />
                 <div className="relative bg-green-900 rounded-full p-1.5 sm:p-2 group-hover:scale-110 transition-transform duration-300">
@@ -174,12 +164,9 @@ export function Header() {
                 </div>
               </div>
               <div className="flex flex-col">
-                <h1 className="text-2xl sm:text-2xl lg:text-3xl font-extrabold text-custom-green group-hover:text-green-600 transition-colors duration-300 leading-none">
+                <h1 className="text-2xl font-serif sm:text-2xl lg:text-3xl font-extrabold text-custom-green group-hover:text-green-600 transition-colors duration-300 leading-none">
                   GOWA
                 </h1>
-                <span className="text-base sm:text-lg lg:text-xl text-custom-green -mt-0.5 sm:-mt-1">
-                  Food
-                </span>
               </div>
             </button>
 
@@ -219,9 +206,7 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() =>
-                        setIsUserDropdownOpen(!isUserDropdownOpen)
-                      }
+                      onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                       className="
                           relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
                           transition-all duration-300 ease-in-out cursor-pointer
@@ -250,7 +235,7 @@ export function Header() {
                             "
                           onClick={() => {
                             setIsUserDropdownOpen(false);
-                            navigate('/profile');
+                            navigate("/profile");
                           }}
                         >
                           <UserCircle className="h-4 w-4" />
@@ -263,7 +248,7 @@ export function Header() {
                             transition-colors duration-200  "
                           onClick={() => {
                             setIsUserDropdownOpen(false);
-                            navigate('/orders');
+                            navigate("/orders");
                           }}
                         >
                           <ClipboardList className="h-4 w-4" />
@@ -281,12 +266,12 @@ export function Header() {
                             localStorage.removeItem("user_gowa");
                             localStorage.removeItem("token_gowa");
                             // Trigger custom event để cập nhật UI
-                            window.dispatchEvent(new Event('authChange'));
+                            window.dispatchEvent(new Event("authChange"));
                             // Cập nhật trạng thái đăng nhập
                             setIsLoggedIn(false);
                             setCartItemCount(0);
                             // Chuyển hướng về trang home
-                            navigate('/');
+                            navigate("/");
                           }}
                         >
                           <LogOut className="h-4 w-4" />
@@ -370,17 +355,19 @@ export function Header() {
       <div
         className={`
           fixed inset-0 z-50 transition-opacity duration-300
-          ${isMobileMenuOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          ${
+            isMobileMenuOpen
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
           }
         `}
         aria-hidden={!isMobileMenuOpen}
       >
         {/* Overlay */}
         <div
-          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"
-            }`}
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
+            isMobileMenuOpen ? "opacity-100" : "opacity-0"
+          }`}
           onClick={() => setIsMobileMenuOpen(false)}
         />
 
@@ -449,7 +436,7 @@ export function Header() {
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    navigate('/profile');
+                    navigate("/profile");
                   }}
                   className="
                     w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
@@ -464,7 +451,7 @@ export function Header() {
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    navigate('/orders');
+                    navigate("/orders");
                   }}
                   className="
     w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
@@ -479,15 +466,15 @@ export function Header() {
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     // Xóa dữ liệu user khỏi localStorage
-                    localStorage.removeItem('user_gowa');
-                    localStorage.removeItem('token_gowa');
+                    localStorage.removeItem("user_gowa");
+                    localStorage.removeItem("token_gowa");
                     // Trigger custom event để cập nhật UI
-                    window.dispatchEvent(new Event('authChange'));
+                    window.dispatchEvent(new Event("authChange"));
                     // Cập nhật trạng thái đăng nhập
                     setIsLoggedIn(false);
                     setCartItemCount(0);
                     // Chuyển hướng về trang home
-                    navigate('/');
+                    navigate("/");
                   }}
                   className="
                     w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-red-600
@@ -503,7 +490,7 @@ export function Header() {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  navigate('/login');
+                  navigate("/login");
                 }}
                 className="
                   w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
