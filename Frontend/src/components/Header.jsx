@@ -331,8 +331,7 @@ export function Header() {
                     "
                   onClick={() => navigate("/login")}
                 >
-                  <LogIn className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
-                  <span className="sr-only">Đăng nhập</span>
+                  <span className="mr-15 px-3 py-2 bg-custom-green/20 rounded-xl hover:bg-custom-green/30  cursor-pointer text-center ">Đăng nhập</span>
                 </Button>
               )}
 

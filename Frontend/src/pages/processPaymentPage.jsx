@@ -9,8 +9,7 @@ import QRCode from "qrcode";
 
 import { PayOSService } from "../services/payosService";
 import OrderService from "../services/orderService";
-import { UserService } from '../services/userService'
-
+import { UserService } from "../services/userService";
 
 import { toast } from "sonner";
 
@@ -24,10 +23,14 @@ import { toast } from "sonner";
 
 const Card = ({ title, right, children, className }) => (
   <section
-    className={`bg-white/90 backdrop-blur-sm border border-gray-100 shadow-sm rounded-2xl p-5 ${className || ""}`}
+    className={`bg-white/90 backdrop-blur-sm border border-gray-100 shadow-sm rounded-2xl p-5 ${
+      className || ""
+    }`}
   >
     <header className="mb-3 flex items-center justify-between gap-3">
-      <h2 className="text-base md:text-lg font-semibold tracking-tight">{title}</h2>
+      <h2 className="text-base md:text-lg font-semibold tracking-tight">
+        {title}
+      </h2>
       {right}
     </header>
     {children}
@@ -52,14 +55,18 @@ export default function ProcessPaymentPage() {
   const isBank = order?.payment?.method === "BANK";
   const isCOD = order?.payment?.method === "COD";
 
-  /* ==== Chuẩn hóa/tính lại amounts & discount cho đúng schema ==== */
+  /* ========= Chuẩn hoá dữ liệu & giảm giá ========= */
 
   // 1) Items từ order để phòng khi rawSubtotal không được truyền
-  const items = useMemo(() => Array.isArray(order?.items) ? order.items : [], [order]);
+  const items = useMemo(
+    () => (Array.isArray(order?.items) ? order.items : []),
+    [order]
+  );
 
   // 2) rawSubtotal: ưu tiên lấy từ order.amounts.rawSubtotal; nếu thiếu, tính lại từ items.lineTotal
   const rawSubtotal = useMemo(() => {
-    if (typeof order?.amounts?.rawSubtotal === "number") return order.amounts.rawSubtotal;
+    if (typeof order?.amounts?.rawSubtotal === "number")
+      return order.amounts.rawSubtotal;
     return items.reduce((s, it) => s + Number(it?.lineTotal || 0), 0);
   }, [order, items]);
 
@@ -69,7 +76,8 @@ export default function ProcessPaymentPage() {
   //       pointsUsed = pointsSpent
   //       pointsPercent = percent
   //       discountFromPoints = discountApplied
-  const voucherDiscount = order?.discount?.type === "POINT_VOUCHER" ? order.discount : null;
+  const voucherDiscount =
+    order?.discount?.type === "POINT_VOUCHER" ? order.discount : null;
 
   const discountFromPoints = useMemo(() => {
     if (voucherDiscount) return Number(voucherDiscount.discountApplied || 0);
@@ -87,42 +95,67 @@ export default function ProcessPaymentPage() {
     return Number(order?.discount?.pointsUsed || 0);
   }, [order, voucherDiscount]);
 
-  // 4) subtotalAfterPoints là bắt buộc theo schema:
-  const subtotalAfterPoints = useMemo(() => {
-    // Vì hiện tại chỉ có cơ chế giảm từ điểm/vé giảm giá:
-    // subtotalAfterPoints = rawSubtotal - discountFromPoints
-    return Math.max(0, rawSubtotal - discountFromPoints);
-  }, [rawSubtotal, discountFromPoints]);
+  // 4) Giảm từ mã (GIFT_CODE) nếu đơn được tạo bằng mã
+  //    discount: { type:'GIFT_CODE', code, percent, discountApplied }
+  const giftCodeInfo =
+    order?.discount?.type === "GIFT_CODE" ? order.discount : null;
 
-  // 5) total: ưu tiên order.amounts.total (PaymentPage đã trừ trực tiếp),
-  //    nếu không có thì dùng subtotalAfterPoints
+  const discountFromCode = useMemo(() => {
+    if (!giftCodeInfo) return 0;
+    return Number(giftCodeInfo.discountApplied || 0);
+  }, [giftCodeInfo]);
+
+  const codePercent = useMemo(() => {
+    if (!giftCodeInfo) return 0;
+    return Number(giftCodeInfo.percent || 0);
+  }, [giftCodeInfo]);
+
+  // 5) Tổng phụ sau giảm: ưu tiên theo nguồn được áp dụng (chỉ 1 nguồn giữa vé/điểm hoặc mã)
+  const subtotalAfterDiscount = useMemo(() => {
+    if (voucherDiscount) return Math.max(0, rawSubtotal - discountFromPoints);
+    if (giftCodeInfo) return Math.max(0, rawSubtotal - discountFromCode);
+    return rawSubtotal;
+  }, [
+    voucherDiscount,
+    giftCodeInfo,
+    rawSubtotal,
+    discountFromPoints,
+    discountFromCode,
+  ]);
+
+  // Giữ tên trường cũ cho schema (nếu BE đang expect 'subtotalAfterPoints')
+  const subtotalAfterPoints = subtotalAfterDiscount;
+
+  // 6) total: ưu tiên order.amounts.total (PaymentPage đã tính),
+  //    nếu không có thì dùng subtotalAfterDiscount
   const total = useMemo(() => {
-    if (typeof order?.amounts?.total === "number") return Math.max(0, order.amounts.total);
-    return Math.max(0, subtotalAfterPoints);
-  }, [order, subtotalAfterPoints]);
+    if (typeof order?.amounts?.total === "number")
+      return Math.max(0, order.amounts.total);
+    return Math.max(0, subtotalAfterDiscount);
+  }, [order, subtotalAfterDiscount]);
 
-  // 6) Số tiền để thanh toán với PayOS
+  // 7) Số tiền cần thanh toán với PayOS
   const amountToPay = total;
 
-  /* ==== Build orderData ĐÚNG SCHEMA ==== */
+  /* ========= Build orderData đúng schema ========= */
   const orderData = useMemo(() => {
-    return {
+    const base = {
       user: order?.user?._id, // ObjectId
       products: items.map((it) => ({
-        product: it._id,                         // ObjectId sản phẩm
+        product: it._id, // ObjectId sản phẩm
         quantity: Number(it.qty || it.quantity || 1),
-        price: Number(it.unitPrice || 0),        // đơn giá 1KG
+        price: Number(it.unitPrice || 0), // đơn giá theo 1KG
         weight: it.weight === "500G" ? "500G" : "1KG",
       })),
       discount: {
-        pointsUsed,          // từ vé: pointsSpent
-        pointsPercent,       // từ vé: percent
-        discountFromPoints,  // từ vé: discountApplied
+        pointsUsed, // từ vé: pointsSpent
+        pointsPercent, // từ vé: percent
+        discountFromPoints, // từ vé: discountApplied
       },
       amounts: {
-        rawSubtotal,          // bắt buộc
-        subtotalAfterPoints,  // bắt buộc
-        total,                // bắt buộc
+        rawSubtotal, // bắt buộc
+        subtotalAfterPoints, // bắt buộc (alias subtotalAfterDiscount)
+        total, // bắt buộc
       },
       payment: {
         method: isBank ? "BANK" : "COD",
@@ -134,6 +167,15 @@ export default function ProcessPaymentPage() {
       },
       notes: order?.note || "",
     };
+
+    // Nếu dùng gift code, lưu thêm vào discount (không phá schema cũ)
+    if (giftCodeInfo) {
+      base.discount.code = giftCodeInfo.code;
+      base.discount.codePercent = codePercent;
+      base.discount.discountFromCode = discountFromCode;
+    }
+
+    return base;
   }, [
     order,
     items,
@@ -144,20 +186,20 @@ export default function ProcessPaymentPage() {
     subtotalAfterPoints,
     total,
     isBank,
+    giftCodeInfo,
+    codePercent,
+    discountFromCode,
   ]);
 
-  /* ==== Hành vi tạo đơn theo phương thức thanh toán ==== */
+  /* ========= Hành vi tạo đơn theo phương thức thanh toán ========= */
 
   const handleConfirmCOD = async () => {
     try {
       const result = await OrderService.createOrder(orderData);
       if (result.success === true) {
-        // Tính số điểm thưởng 
-        const updatePoints = 
-        Math.floor(amountToPay / 1000) - pointsUsed;
-        // Cập nhật điểm thưởng : points = tổng số tiền sử dụng chia cho 100 trừ cho pointsUsed
-         await UserService.updateRewardPoints(order?.user?._id, updatePoints);
-        // chuyển updatePoints sang kiểu Number
+        // Tính điểm thưởng: ví dụ 1 điểm / 1,000đ, trừ đi điểm đã dùng
+        const updatePoints = Math.floor(amountToPay / 1000) - pointsUsed;
+        await UserService.updateRewardPoints(order?.user?._id, updatePoints);
 
         toast.success("Đơn hàng đã được tạo thành công!");
         navigate("/thank-you", { state: { orderId: result?.data?._id } });
@@ -178,16 +220,18 @@ export default function ProcessPaymentPage() {
       if (response.status === "PAID") {
         try {
           const result = await OrderService.createOrder(orderData);
-          const updatePoints = 
-        Math.floor(amountToPay / 1000) - pointsUsed;
-        // Cập nhật điểm thưởng : points = tổng số tiền sử dụng chia cho 100 trừ cho pointsUsed
-         await UserService.updateRewardPoints(order?.user?._id, updatePoints);
-        // chuyển updatePoints sang kiểu Number
+          const updatePoints = Math.floor(amountToPay / 1000) - pointsUsed;
+          await UserService.updateRewardPoints(order?.user?._id, updatePoints);
+
           toast.success("Đơn hàng đã được tạo thành công!");
-          navigate("/thank-you", { state: { orderId: result?.data?._id || `OD${Date.now()}` } });
+          navigate("/thank-you", {
+            state: { orderId: result?.data?._id || `OD${Date.now()}` },
+          });
         } catch (err) {
           console.error("Lỗi tạo đơn hàng:", err);
-          toast.error(err?.message || "Đã xảy ra lỗi khi tạo đơn hàng. Vui lòng thử lại.");
+          toast.error(
+            err?.message || "Đã xảy ra lỗi khi tạo đơn hàng. Vui lòng thử lại."
+          );
         }
       } else {
         toast.message("Thanh toán chưa hoàn tất");
@@ -199,7 +243,7 @@ export default function ProcessPaymentPage() {
     }
   };
 
-  /* ==== PayOS QR ==== */
+  /* ========= PayOS QR ========= */
   useEffect(() => {
     const fetchPayOSAndGenerateQR = async () => {
       setLoadingQR(true);
@@ -211,7 +255,7 @@ export default function ProcessPaymentPage() {
 
         const paymentData = {
           orderCode: newOrderCode,
-          amount: amountToPay, // dùng tổng đã chuẩn hóa
+          amount: amountToPay, // dùng tổng đã chuẩn hoá
           description: order?.payment?.bankTransferNote,
           returnUrl: window.location.origin + "/payment-success",
           cancelUrl: window.location.origin + "/payment-cancel",
@@ -271,15 +315,21 @@ export default function ProcessPaymentPage() {
     bankName: "Vietcombank (VCB)",
     accountName: "CÔNG TY ABC",
     accountNumber: "0123 456 789",
-    content: order?.payment?.bankTransferNote || `Thanh toan ${order?.user?.name || "khach"}`,
-    qrUrl: `https://placehold.co/320x320/png?text=QR%20${encodeURIComponent(formatVND(amountToPay))}`,
+    content:
+      order?.payment?.bankTransferNote ||
+      `Thanh toan ${order?.user?.name || "khach"}`,
+    qrUrl: `https://placehold.co/320x320/png?text=QR%20${encodeURIComponent(
+      formatVND(amountToPay)
+    )}`,
   };
 
   return (
     <div className="min-h-screen">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-1 md:py-1">
         <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Xử lý thanh toán</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Xử lý thanh toán
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             Vui lòng kiểm tra lại thông tin trước khi hoàn tất.
           </p>
@@ -292,11 +342,15 @@ export default function ProcessPaymentPage() {
               <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm mb-3">
                 <p>
                   <span className="text-gray-500">Khách hàng:</span>{" "}
-                  <span className="font-medium">{order?.user?.name || "—"}</span>
+                  <span className="font-medium">
+                    {order?.user?.name || "—"}
+                  </span>
                 </p>
                 <p>
                   <span className="text-gray-500">Email:</span>{" "}
-                  <span className="font-medium">{order?.user?.email || "—"}</span>
+                  <span className="font-medium">
+                    {order?.user?.email || "—"}
+                  </span>
                 </p>
                 <p>
                   <span className="text-gray-500">Phương thức thanh toán:</span>{" "}
@@ -310,7 +364,9 @@ export default function ProcessPaymentPage() {
                 <p>
                   <span className="text-gray-500">Phương thức nhận hàng:</span>{" "}
                   <span className="font-medium">
-                    {order?.shipping?.method === "HOME" ? "Giao tận nhà" : "Nhận tại cửa hàng"}
+                    {order?.shipping?.method === "HOME"
+                      ? "Giao tận nhà"
+                      : "Nhận tại cửa hàng"}
                   </span>
                 </p>
 
@@ -327,18 +383,26 @@ export default function ProcessPaymentPage() {
                 <div className="mt-2 text-sm text-gray-600 space-y-2 mb-3">
                   <p>
                     <span className="text-gray-500">Người nhận:</span>{" "}
-                    <span className="font-medium">{order.shipping.address.name}</span>
+                    <span className="font-medium">
+                      {order.shipping.address.name}
+                    </span>
                   </p>
                   <p>
                     <span className="text-gray-500">SĐT:</span>{" "}
-                    <span className="font-medium">{order.shipping.address.phone}</span>
+                    <span className="font-medium">
+                      {order.shipping.address.phone}
+                    </span>
                   </p>
                   <p>
                     <span className="text-gray-500">Địa chỉ:</span>{" "}
                     <span className="font-medium">
                       {order.shipping.address.address}
-                      {order.shipping.address.ward ? `, ${order.shipping.address.ward}` : ""}
-                      {order.shipping.address.city ? `, ${order.shipping.address.city}` : ""}
+                      {order.shipping.address.ward
+                        ? `, ${order.shipping.address.ward}`
+                        : ""}
+                      {order.shipping.address.city
+                        ? `, ${order.shipping.address.city}`
+                        : ""}
                     </span>
                   </p>
                 </div>
@@ -364,20 +428,28 @@ export default function ProcessPaymentPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{it.name}</p>
-                          <p className="text-sm text-gray-500">Số lượng: {it.qty}</p>
-                          <p className="text-xs text-gray-500">Đơn vị: {it.weight || "1KG"}</p>
+                          <p className="text-sm text-gray-500">
+                            Số lượng: {it.qty}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Đơn vị: {it.weight || "1KG"}
+                          </p>
                         </div>
                         <div className="text-right w-36">
                           <p className="text-sm text-gray-500">Đơn giá</p>
                           <p className="font-medium">
                             {formatVND(
-                              (it.weight === "500G" ? Math.round(Number(it.unitPrice) * 0.5) : Number(it.unitPrice)) || 0
+                              (it.weight === "500G"
+                                ? Math.round(Number(it.unitPrice) * 0.5)
+                                : Number(it.unitPrice)) || 0
                             )}
                           </p>
                         </div>
                         <div className="text-right w-40">
                           <p className="text-sm text-gray-500">Thành tiền</p>
-                          <p className="font-semibold">{formatVND(it.lineTotal)}</p>
+                          <p className="font-semibold">
+                            {formatVND(it.lineTotal)}
+                          </p>
                         </div>
                       </li>
                     ))}
@@ -392,7 +464,9 @@ export default function ProcessPaymentPage() {
               {order?.note && (
                 <div className="mt-2">
                   <h3 className="text-sm font-medium mb-1">Ghi chú:</h3>
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">{order.note}</p>
+                  <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                    {order.note}
+                  </p>
                 </div>
               )}
             </Card>
@@ -403,7 +477,11 @@ export default function ProcessPaymentPage() {
                   <div className="space-y-3">
                     <div className="mt-4 flex justify-center">
                       <div className="w-[220px] p-4 bg-white rounded-xl shadow border text-center">
-                        <img src={vietQR} alt="VietQR PRO" className="mx-auto mb-2 w-[120px]" />
+                        <img
+                          src={vietQR}
+                          alt="VietQR PRO"
+                          className="mx-auto mb-2 w-[120px]"
+                        />
 
                         {loadingQR ? (
                           <div className="w-full aspect-square rounded bg-gray-100 grid place-items-center text-xs text-gray-500">
@@ -441,7 +519,9 @@ export default function ProcessPaymentPage() {
                     </p>
                     <p>
                       <span className="text-gray-500">Số Tài khoản:</span>{" "}
-                      <span className="font-medium">{bankInfo.accountNumber}</span>
+                      <span className="font-medium">
+                        {bankInfo.accountNumber}
+                      </span>
                     </p>
                     <p className="break-all">
                       <span className="text-gray-500">Nội dung:</span>{" "}
@@ -449,16 +529,22 @@ export default function ProcessPaymentPage() {
                     </p>
                     <p>
                       <span className="text-gray-500">Số tiền:</span>{" "}
-                      <span className="font-semibold">{formatVND(amountToPay)}</span>
+                      <span className="font-semibold">
+                        {formatVND(amountToPay)}
+                      </span>
                     </p>
                     <Divider />
                     <p className="text-xs text-red-500">
-                      Vui lòng chuyển đúng số tiền và nội dung sau đó nhấn vào nút kiểm tra thanh toán để xác nhận.
+                      Vui lòng chuyển đúng số tiền và nội dung sau đó nhấn vào
+                      nút kiểm tra thanh toán để xác nhận.
                     </p>
                     <p className="text-xs text-gray-500">
-                      Nếu có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ khách hàng.
+                      Nếu có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ khách
+                      hàng.
                     </p>
-                    <p className="text-xs text-gray-500">Số điện thoại hỗ trợ: 1900 1234</p>
+                    <p className="text-xs text-gray-500">
+                      Số điện thoại hỗ trợ: 1900 1234
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -478,17 +564,24 @@ export default function ProcessPaymentPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">
                       {voucherDiscount
-                        ? `Giảm từ vé (${pointsPercent}% - tối đa hiển thị ở PaymentPage)`
-                        : "Giảm từ điểm"}
+                        ? `Giảm từ vé (${pointsPercent}%)`
+                        : giftCodeInfo
+                        ? `Giảm từ mã (${codePercent}%)`
+                        : "Giảm"}
                     </span>
                     <span className="font-medium text-green-600">
-                      - {formatVND(discountFromPoints)}
+                      -
+                      {formatVND(
+                        voucherDiscount ? discountFromPoints : discountFromCode
+                      )}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Sau giảm</span>
-                    <span className="font-medium">{formatVND(subtotalAfterPoints)}</span>
+                    <span className="font-medium">
+                      {formatVND(subtotalAfterDiscount)}
+                    </span>
                   </div>
 
                   <Divider />

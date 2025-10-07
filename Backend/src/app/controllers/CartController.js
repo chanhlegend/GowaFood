@@ -88,27 +88,17 @@ class CartController {
   async getCart(req, res) {
     try {
       const userId = req.query.userId;
-      if (!userId) return res.status(400).json({ message: "Thiếu userId" });
+      if (!userId) return res.status(401).json({ message: "Bạn chưa đăng nhập" });
       if (!mongoose.Types.ObjectId.isValid(userId)) {
         return res.status(400).json({ message: "userId không hợp lệ" });
       }
-
-      const cart = await Cart.findOne({ user: userId }).populate(
-        "items.product"
-      );
+      const cart = await Cart.findOne({ user: userId }).populate("items.product");
       return res.status(200).json(toResponse(cart));
     } catch (err) {
       if (err.name === "ValidationError") {
-        return res
-          .status(400)
-          .json({
-            message: "Dữ liệu giỏ hàng không hợp lệ",
-            error: err.message,
-          });
+        return res.status(400).json({ message: "Dữ liệu giỏ hàng không hợp lệ", error: err.message });
       }
-      return res
-        .status(500)
-        .json({ message: "Lỗi server", error: err.message });
+      return res.status(500).json({ message: "Lỗi server", error: err.message });
     }
   }
 
@@ -116,7 +106,7 @@ class CartController {
   async addItem(req, res) {
     try {
       const userId = getUserIdFromReq(req);
-      if (!userId) return res.status(400).json({ message: "Thiếu userId" });
+      if (!userId) return res.status(400).json({ message: "Bạn chưa đăng nhập" });
 
       const { productId, quantity, weight } = req.body;
       if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
@@ -191,7 +181,7 @@ class CartController {
   async updateItem(req, res) {
     try {
       const userId = getUserIdFromReq(req);
-      if (!userId) return res.status(400).json({ message: "Thiếu userId" });
+      if (!userId) return res.status(400).json({ message: "Bạn chưa đăng nhập" });
 
       const { productId, quantity, weight } = req.body;
       if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
@@ -257,7 +247,7 @@ class CartController {
   async removeItem(req, res) {
     try {
       const userId = getUserIdFromReq(req);
-      if (!userId) return res.status(400).json({ message: "Thiếu userId" });
+      if (!userId) return res.status(400).json({ message: "Bạn chưa đăng nhập" });
 
       const { productId } = req.params;
       if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
@@ -318,7 +308,7 @@ class CartController {
   async clearCart(req, res) {
     try {
       const userId = getUserIdFromReq(req);
-      if (!userId) return res.status(400).json({ message: "Thiếu userId" });
+      if (!userId) return res.status(400).json({ message: "Bạn chưa đăng nhập" });
 
       const cart = await getOrCreateCart(userId);
       cart.items = [];
@@ -347,7 +337,7 @@ class CartController {
   async getItemCount(req, res) {
     try {
       const { userId } = req.params;
-      if (!userId) return res.status(400).json({ message: "Thiếu userId" });
+      if (!userId) return res.status(400).json({ message: "Bạn chưa đăng nhập" });
       if (!mongoose.Types.ObjectId.isValid(userId)) {
         return res.status(400).json({ message: "userId không hợp lệ" });
       }

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { UserService } from "../services/userService";
 import { ROUTE_PATH } from "../constants/routePath";
-
+import GiftCodeService from "@/services/GiftCodeService";
 import { toast } from "sonner";
 
 const Pill = ({ active, onClick, children }) => (
@@ -27,9 +27,7 @@ const Card = ({ title, right, children, className }) => (
     }`}
   >
     <header className="mb-3 flex items-center justify-between gap-3">
-      <h2 className="text-base md:text-lg font-semibold tracking-tight">
-        {title}
-      </h2>
+      <h2 className="text-base md:text-lg font-semibold tracking-tight">{title}</h2>
       {right}
     </header>
     {children}
@@ -37,7 +35,13 @@ const Card = ({ title, right, children, className }) => (
 );
 
 const Divider = () => <div className="h-px w-full bg-gray-100" />;
-const formatVND = (n = 0) => Number(n).toLocaleString("vi-VN") + "₫";
+
+// ---- helpers số học an toàn ----
+const toNumber = (v, def = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : def;
+};
+const formatVND = (n = 0) => toNumber(n).toLocaleString("vi-VN") + "₫";
 
 /** Vé giảm giá dùng điểm */
 const VOUCHERS = [
@@ -54,7 +58,7 @@ const PaymentPage = () => {
   const {
     items: stateItems,
     subtotal: stateSubtotal,
-    total: stateTotal, // vẫn nhận nếu có, nhưng sẽ tính lại trực tiếp
+    total: stateTotal,
     note: stateNote,
   } = location.state || {};
 
@@ -62,12 +66,23 @@ const PaymentPage = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressIdx, setSelectedAddressIdx] = useState(0);
 
+  // ---- giảm giá: 2 phương án ----
+  const [mode, setMode] = useState("points"); // "points" | "code"
+
+  // vé bằng điểm
+  const [selectedVoucherId, setSelectedVoucherId] = useState(null);
+
+  // mã giảm giá
+  const [couponCode, setCouponCode] = useState("");
+  const [couponPreview, setCouponPreview] = useState(null); // { ok, code, percent, quantity, discount, giftcodeId }
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false); // đã apply mã (chỉ chọn, chưa trừ BE)
+  const [couponAppliedCode, setCouponAppliedCode] = useState(null);
+
   const [paymentMethod, setPaymentMethod] = useState("COD"); // COD | BANK
   const [shippingMethod, setShippingMethod] = useState("STORE"); // STORE | HOME
   const [note, setNote] = useState(stateNote || "");
-
-  // Vé được chọn
-  const [selectedVoucherId, setSelectedVoucherId] = useState(null);
 
   // Cached user
   const userData = useMemo(() => {
@@ -79,7 +94,6 @@ const PaymentPage = () => {
   }, []);
 
   useEffect(() => {
-    
     const fetchUserInfo = async () => {
       try {
         if (userData && userData._id) {
@@ -96,24 +110,35 @@ const PaymentPage = () => {
     fetchUserInfo();
   }, [userData]);
 
+  // Khi đổi tab: reset phương án còn lại
+  useEffect(() => {
+    if (mode === "points") {
+      // bỏ mã
+      setCouponApplied(false);
+      setCouponAppliedCode(null);
+      setCouponPreview(null);
+      setCouponCode("");
+      setCouponError("");
+    } else if (mode === "code") {
+      // bỏ vé
+      setSelectedVoucherId(null);
+    }
+  }, [mode]);
+
   /* ===== Items & math safety ===== */
-  const items = useMemo(
-    () => (Array.isArray(stateItems) ? stateItems : []),
-    [stateItems]
-  );
+  const items = useMemo(() => (Array.isArray(stateItems) ? stateItems : []), [stateItems]);
 
   const normalizedItems = useMemo(() => {
     return items.map((it) => {
       const _id = it.id || it.productId || null;
-      const qty = Number(it.quantity ?? it.qty ?? 1);
-      const unitPrice = Number(it.unitPrice ?? it.price ?? 0);
+      const qty = toNumber(it.quantity ?? it.qty ?? 1, 1);
+      const unitPrice = toNumber(it.unitPrice ?? it.price ?? 0, 0);
       const name = it.name || it.title || "Sản phẩm";
       const unit = it.unit || "";
       const weight = it.weight || "1KG";
       const weightFactor = weight === "1KG" ? 1 : 0.5;
       const lineTotal = unitPrice * qty * weightFactor;
       const image = it.image || it.images?.[0] || null;
-
       return { name, qty, unit, unitPrice, lineTotal, raw: it, _id, weight, image };
     });
   }, [items]);
@@ -123,7 +148,7 @@ const PaymentPage = () => {
     return normalizedItems.reduce((s, it) => s + it.lineTotal, 0);
   }, [normalizedItems, stateSubtotal]);
 
-  /* ===== Vouchers logic ===== */
+  /* ===== VOUCHERS logic ===== */
   const availablePoints = user?.points ?? 100;
 
   const selectedVoucher = useMemo(
@@ -131,33 +156,121 @@ const PaymentPage = () => {
     [selectedVoucherId]
   );
 
-  const voucherUsable = selectedVoucher
-    ? availablePoints >= selectedVoucher.points
-    : false;
+  const voucherUsable = selectedVoucher ? availablePoints >= selectedVoucher.points : false;
 
   const voucherDiscount = useMemo(() => {
     if (!selectedVoucher || !voucherUsable) return 0;
-    const byPercent = Math.floor((rawSubtotal * selectedVoucher.percent) / 100);
-    return Math.min(byPercent, selectedVoucher.cap);
+    const byPercent = Math.floor((toNumber(rawSubtotal, 0) * toNumber(selectedVoucher.percent, 0)) / 100);
+    return Math.min(byPercent, toNumber(selectedVoucher.cap, 0));
   }, [selectedVoucher, voucherUsable, rawSubtotal]);
 
-  // Tổng tiền: TRỪ TRỰC TIẾP (đã fix)
+  /* ===== Coupon logic ===== */
+  const couponPercent = toNumber(couponPreview?.percent, 0);
+  const couponDiscount = useMemo(() => {
+    if (!couponApplied || !couponPreview?.ok) return 0;
+    return Math.floor((toNumber(rawSubtotal, 0) * couponPercent) / 100);
+  }, [couponApplied, couponPreview?.ok, couponPercent, rawSubtotal]);
+
+  async function previewCoupon() {
+    setCouponError("");
+    setCouponPreview(null);
+
+    const code = (couponCode || "").trim().toUpperCase();
+    if (!code) {
+      setCouponError("Vui lòng nhập mã");
+      return;
+    }
+
+    setCouponLoading(true);
+    try {
+      const { success, data, message } = await GiftCodeService.getAllGiftCodes();
+      if (!success) throw new Error(message || "Không thể lấy danh sách mã");
+
+      const list = Array.isArray(data) ? data : [];
+      const matched = list.find((g) => String(g.code || "").toUpperCase() === code);
+
+      if (!matched) throw new Error("Mã không tồn tại");
+      if (toNumber(matched.quantity, 0) <= 0) {
+        throw new Error("Mã đã hết lượt dùng");
+      }
+
+      // đọc phần trăm từ discountPercent hoặc percent
+      const percentRaw = matched.discountPercent ?? matched.percent;
+      const percent = toNumber(percentRaw, NaN);
+      if (!Number.isFinite(percent)) {
+        throw new Error("Mã không hợp lệ (thiếu/không đúng phần trăm giảm)");
+      }
+
+      const subtotalNum = toNumber(rawSubtotal, 0);
+      const discount = Math.floor((subtotalNum * percent) / 100);
+
+      setCouponPreview({
+        ok: true,
+        code: matched.code,
+        percent,
+        quantity: toNumber(matched.quantity, 0),
+        discount,
+        giftcodeId: matched._id || matched.id || null,
+      });
+    } catch (e) {
+      setCouponError(e.message || "Không thể kiểm tra mã");
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+  // KHÔNG gọi API tại đây – chỉ chọn mã, sẽ xác nhận khi đặt hàng
+  async function applyCoupon() {
+    if (!couponPreview?.ok) return;
+    const code = (couponCode || "").trim().toUpperCase();
+
+    if (couponApplied && couponAppliedCode && couponAppliedCode !== code) {
+      toast.message("Đã thay thế mã cũ", { description: `${couponAppliedCode} → ${code}` });
+    }
+
+    setCouponApplied(true);
+    setCouponAppliedCode(code);
+    toast.success("Đã áp dụng mã (sẽ xác nhận khi thanh toán)");
+  }
+
+  // Tổng tiền: chỉ trừ một nguồn
   const finalTotal = useMemo(() => {
-    const base = typeof stateTotal === "number" ? stateTotal : rawSubtotal;
-    return Math.max(0, base - voucherDiscount);
-  }, [rawSubtotal, stateTotal, voucherDiscount]);
+    const base = typeof stateTotal === "number" ? stateTotal : toNumber(rawSubtotal, 0);
+    const discountFromVoucher = mode === "points" ? voucherDiscount : 0;
+    const discountFromCoupon = mode === "code" ? couponDiscount : 0;
+    const discount = Math.max(discountFromVoucher, discountFromCoupon);
+    return Math.max(0, base - discount);
+  }, [mode, rawSubtotal, stateTotal, voucherDiscount, couponDiscount]);
 
   /* ===== Handlers ===== */
-  const handlePlaceOrder = () => {
-    if ( shippingMethod === "HOME" && addresses.length === 0 ) {
+  const handlePlaceOrder = async () => {
+    if (shippingMethod === "HOME" && addresses.length === 0) {
       toast.error("Vui lòng thêm địa chỉ nhận hàng.");
       navigate(ROUTE_PATH.ADDRESS_MANAGE);
       return;
     }
-    const selectedAddress =
-      shippingMethod === "HOME" ? addresses[selectedAddressIdx] : null;
+    const selectedAddress = shippingMethod === "HOME" ? addresses[selectedAddressIdx] : null;
 
-    // Chuẩn hóa items
+    // Nếu đang dùng mã: xác nhận với BE NGAY TRƯỚC KHI tạo đơn
+    if (mode === "code" && couponApplied && couponPreview?.ok) {
+      const userId = user?._id ?? userData?._id ?? null;
+      if (!userId) {
+        toast.error("Bạn cần đăng nhập để hoàn tất với mã giảm giá.");
+        return;
+      }
+      try {
+        const res = await GiftCodeService.applyGiftCode(couponAppliedCode, userId);
+        if (!res.success) {
+          toast.error(res.message || "Áp dụng mã khi thanh toán thất bại");
+          return;
+        }
+      } catch (e) {
+        toast.error(e.message || "Áp dụng mã khi thanh toán thất bại");
+        return;
+      }
+    }
+
+    // Chuẩn hoá items
     const orderItems = normalizedItems.map((it) => ({
       _id: it._id || it.raw.productId || null,
       name: it.name,
@@ -179,7 +292,7 @@ const PaymentPage = () => {
         pointsAvailable: availablePoints,
       },
       shipping: {
-        method: shippingMethod, // 'STORE' | 'HOME'
+        method: shippingMethod,
         address: selectedAddress
           ? {
               name: selectedAddress.name,
@@ -192,26 +305,31 @@ const PaymentPage = () => {
           : null,
       },
       payment: {
-        method: paymentMethod, // 'COD' | 'BANK'
-        bankTransferNote:
-          paymentMethod === "BANK"
-            ? `Thanh toan #${Date.now().toString().slice(-6)}`
-            : null,
+        method: paymentMethod,
+        bankTransferNote: paymentMethod === "BANK" ? `Thanh toan #${Date.now().toString().slice(-6)}` : null,
       },
-      // Thông tin giảm giá theo VOUCHER điểm
-      discount: selectedVoucher
-        ? {
-            type: "POINT_VOUCHER",
-            voucherId: selectedVoucher.id,
-            pointsSpent: selectedVoucher.points,
-            percent: selectedVoucher.percent,
-            cap: selectedVoucher.cap,
-            discountApplied: voucherDiscount,
-          }
-        : null,
+      // Thông tin giảm giá (chỉ 1 nguồn)
+      discount:
+        mode === "points" && selectedVoucher
+          ? {
+              type: "POINT_VOUCHER",
+              voucherId: selectedVoucher.id,
+              pointsSpent: selectedVoucher.points,
+              percent: selectedVoucher.percent,
+              cap: selectedVoucher.cap,
+              discountApplied: voucherDiscount,
+            }
+          : mode === "code" && couponApplied && couponPreview?.ok
+          ? {
+              type: "GIFT_CODE",
+              code: couponAppliedCode,
+              percent: couponPreview.percent,
+              discountApplied: couponDiscount,
+            }
+          : null,
       amounts: {
-        rawSubtotal,
-        total: finalTotal,
+        rawSubtotal: toNumber(rawSubtotal, 0),
+        total: toNumber(finalTotal, 0),
         currency: "VND",
       },
       items: orderItems,
@@ -230,12 +348,8 @@ const PaymentPage = () => {
     <div className="min-h-screen ">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-1 md:py-1">
         <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Thanh toán đơn hàng
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Hoàn tất đơn hàng của bạn chỉ với vài bước.
-          </p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Thanh toán đơn hàng</h1>
+          <p className="text-sm text-gray-500 mt-1">Hoàn tất đơn hàng của bạn chỉ với vài bước.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
@@ -245,16 +359,13 @@ const PaymentPage = () => {
             <Card title="Thông tin người dùng">
               <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
                 <p>
-                  <span className="text-gray-500">Tên:</span>{" "}
-                  <span className="font-medium">{user?.name || "—"}</span>
+                  <span className="text-gray-500">Tên:</span> <span className="font-medium">{user?.name || "—"}</span>
                 </p>
                 <p>
-                  <span className="text-gray-500">Email:</span>{" "}
-                  <span className="font-medium">{user?.email || "—"}</span>
+                  <span className="text-gray-500">Email:</span> <span className="font-medium">{user?.email || "—"}</span>
                 </p>
                 <p>
-                  <span className="text-gray-500">Điểm khả dụng:</span>{" "}
-                  <span className="font-semibold">{availablePoints}</span>
+                  <span className="text-gray-500">Điểm khả dụng:</span> <span className="font-semibold">{availablePoints}</span>
                 </p>
               </div>
             </Card>
@@ -262,16 +373,10 @@ const PaymentPage = () => {
             {/* Shipping method */}
             <Card title="Phương thức nhận hàng">
               <div className="flex flex-wrap gap-2">
-                <Pill
-                  active={shippingMethod === "STORE"}
-                  onClick={() => setShippingMethod("STORE")}
-                >
+                <Pill active={shippingMethod === "STORE"} onClick={() => setShippingMethod("STORE")}>
                   Nhận tại cửa hàng
                 </Pill>
-                <Pill
-                  active={shippingMethod === "HOME"}
-                  onClick={() => setShippingMethod("HOME")}
-                >
+                <Pill active={shippingMethod === "HOME"} onClick={() => setShippingMethod("HOME")}>
                   Giao tận nhà
                 </Pill>
               </div>
@@ -282,10 +387,7 @@ const PaymentPage = () => {
               <Card
                 title="Chọn địa chỉ nhận hàng"
                 right={
-                  <button 
-                  className="text-sm text-gray-600 hover:text-black transition cursor-pointer"
-                  onClick={() => navigate(ROUTE_PATH.ADDRESS_MANAGE)}
-                  >
+                  <button className="text-sm text-gray-600 hover:text-black transition cursor-pointer" onClick={() => navigate(ROUTE_PATH.ADDRESS_MANAGE)}>
                     + Thêm địa chỉ
                   </button>
                 }
@@ -299,33 +401,21 @@ const PaymentPage = () => {
                           key={idx}
                           className={[
                             "block rounded-xl border p-3 cursor-pointer transition-all",
-                            active
-                              ? "border-custom-green shadow-sm ring-1 ring-custom-green/5"
-                              : "border-gray-200 hover:border-gray-300",
+                            active ? "border-custom-green shadow-sm ring-1 ring-custom-green/5" : "border-gray-200 hover:border-gray-300",
                           ].join(" ")}
                         >
                           <div className="flex items-start gap-3">
-                            <input
-                              type="radio"
-                              checked={active}
-                              onChange={() => setSelectedAddressIdx(idx)}
-                              className="mt-1 accent-custom-green"
-                            />
+                            <input type="radio" checked={active} onChange={() => setSelectedAddressIdx(idx)} className="mt-1 accent-custom-green" />
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">{addr.name}</span>
                                 {addr.isDefault && (
-                                  <span className="text-[10px] leading-4 bg-custom-green text-white px-2 py-0.5 rounded">
-                                    Mặc định
-                                  </span>
+                                  <span className="text-[10px] leading-4 bg-custom-green text-white px-2 py-0.5 rounded">Mặc định</span>
                                 )}
                               </div>
                               <div className="ml-0.5 text-sm text-gray-600">
                                 <div>
-                                  SĐT:{" "}
-                                  <span className="font-medium">
-                                    {addr.phone}
-                                  </span>
+                                  SĐT: <span className="font-medium">{addr.phone}</span>
                                 </div>
                                 <p>
                                   {addr.address}
@@ -348,16 +438,10 @@ const PaymentPage = () => {
             {/* Payment method */}
             <Card title="Phương thức thanh toán">
               <div className="flex flex-wrap gap-2">
-                <Pill
-                  active={paymentMethod === "COD"}
-                  onClick={() => setPaymentMethod("COD")}
-                >
+                <Pill active={paymentMethod === "COD"} onClick={() => setPaymentMethod("COD")}>
                   COD
                 </Pill>
-                <Pill
-                  active={paymentMethod === "BANK"}
-                  onClick={() => setPaymentMethod("BANK")}
-                >
+                <Pill active={paymentMethod === "BANK"} onClick={() => setPaymentMethod("BANK")}>
                   Chuyển khoản ngân hàng
                 </Pill>
               </div>
@@ -386,26 +470,11 @@ const PaymentPage = () => {
                   {normalizedItems.map((it, i) => (
                     <li key={i} className="py-3 flex items-center gap-4">
                       {it.image ? (
-                        <img
-                          src={it.image}
-                          alt={it.name}
-                          className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                        />
+                        <img src={it.image} alt={it.name} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
                       ) : (
                         <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300 flex-shrink-0">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-8 w-8"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M3 4a1 1 0 011-1h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V20a1 1 0 01-1 1h-2C8.477 21 3 15.523 3 9V4z"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V20a1 1 0 01-1 1h-2C8.477 21 3 15.523 3 9V4z" />
                           </svg>
                         </div>
                       )}
@@ -419,11 +488,7 @@ const PaymentPage = () => {
                       </div>
                       <div className="text-right w-36">
                         <p className="text-sm text-gray-500">Đơn giá</p>
-                        <p className="font-medium">
-                          {it.weight === "1KG"
-                            ? formatVND(it.unitPrice)
-                            : formatVND(Math.round(it.unitPrice * 0.5))}
-                        </p>
+                        <p className="font-medium">{it.weight === "1KG" ? formatVND(it.unitPrice) : formatVND(Math.round(it.unitPrice * 0.5))}</p>
                       </div>
                       <div className="text-right w-40">
                         <p className="text-sm text-gray-500">Thành tiền</p>
@@ -437,80 +502,129 @@ const PaymentPage = () => {
               )}
             </Card>
 
-            {/* VOUCHERS (thay cho Mã giảm giá & Điểm thưởng) */}
-            <Card title="Vé giảm giá bằng điểm">
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                {VOUCHERS.map((v) => {
-                  const canUse = availablePoints >= v.points;
-                  const active = selectedVoucherId === v.id;
-                  const previewDiscount = Math.min(
-                    Math.floor((rawSubtotal * v.percent) / 100),
-                    v.cap
-                  );
+            {/* VOUCHERS & COUPON */}
+            <Card title="Giảm giá">
+              {/* Tabs chọn phương án */}
+              <div className="flex items-center gap-2 mb-3 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setMode("points")}
+                  className={["px-3 py-1.5 rounded-full border", mode === "points" ? "bg-green-600 text-white border-green-600" : "bg-white border-gray-200"].join(" ")}
+                >
+                  Vé bằng điểm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("code")}
+                  className={["px-3 py-1.5 rounded-full border", mode === "code" ? "bg-green-600 text-white border-green-600" : "bg-white border-gray-200"].join(" ")}
+                >
+                  Nhập mã
+                </button>
+              </div>
 
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      disabled={!canUse}
-                      onClick={() =>
-                        setSelectedVoucherId((prev) => (prev === v.id ? null : v.id))
-                      }
-                      className={[
-                        "text-left rounded-2xl border p-4 transition-all group",
-                        canUse
-                          ? "cursor-pointer hover:shadow-sm"
-                          : "opacity-60 cursor-not-allowed",
-                        active
-                          ? "border-custom-green ring-2 ring-custom-green/20 bg-green-50"
-                          : "border-gray-200 hover:border-gray-300 bg-white",
-                      ].join(" ")}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg font-extrabold">
-                              {v.percent}% OFF
-                            </span>
-                            <span className="text-[11px] px-2 py-0.5 rounded-full border bg-white text-gray-600">
-                              Tối đa {formatVND(v.cap)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Dùng <span className="font-semibold">{v.points}</span> điểm
-                          </p>
-                        </div>
-                        <div
+              {/* MODE 1: Vé bằng điểm */}
+              {mode === "points" && (
+                <>
+                  <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {VOUCHERS.map((v) => {
+                      const canUse = availablePoints >= v.points;
+                      const active = selectedVoucherId === v.id;
+                      const previewDiscount = Math.min(Math.floor((toNumber(rawSubtotal, 0) * toNumber(v.percent, 0)) / 100), toNumber(v.cap, 0));
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          disabled={!canUse}
+                          onClick={() => setSelectedVoucherId((prev) => (prev === v.id ? null : v.id))}
                           className={[
-                            "mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center",
-                            active
-                              ? "bg-custom-green border-custom-green"
-                              : "border-gray-300",
+                            "text-left rounded-2xl border p-4 transition-all group",
+                            canUse ? "cursor-pointer hover:shadow-sm" : "opacity-60 cursor-not-allowed",
+                            active ? "border-custom-green ring-2 ring-custom-green/20 bg-green-50" : "border-gray-200 hover:border-gray-300 bg-white",
                           ].join(" ")}
                         >
-                          {active && (
-                            <span className="w-2 h-2 rounded-full bg-white block"></span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-3 text-xs text-gray-500">
-                        Ước tính giảm:{" "}
-                        <span className="font-semibold text-green-700">
-                          -{formatVND(previewDiscount)}
-                        </span>
-                      </div>
-                      {!canUse && (
-                        <div className="mt-2 text-[11px] text-red-500">
-                          Bạn cần {v.points} điểm để dùng vé này.
-                        </div>
-                      )}
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg font-extrabold">{v.percent}% OFF</span>
+                                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-white text-gray-600">Tối đa {formatVND(v.cap)}</span>
+                              </div>
+                              <p className="text-sm text-gray-600 mt-1">
+                                Dùng <span className="font-semibold">{v.points}</span> điểm
+                              </p>
+                            </div>
+                            <div className={["mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center", active ? "bg-custom-green border-custom-green" : "border-gray-300"].join(" ")}>
+                              {active && <span className="w-2 h-2 rounded-full bg-white block" />}
+                            </div>
+                          </div>
+                          <div className="mt-3 text-xs text-gray-500">
+                            Ước tính giảm: <span className="font-semibold text-green-700">-{formatVND(previewDiscount)}</span>
+                          </div>
+                          {!canUse && <div className="mt-2 text-[11px] text-red-500">Bạn cần {v.points} điểm để dùng vé này.</div>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3">Mỗi đơn chỉ dùng 1 vé. Giảm theo % và giới hạn tối đa theo từng vé.</p>
+                </>
+              )}
+
+              {/* MODE 2: Nhập mã */}
+              {mode === "code" && (
+                <div className="rounded-xl border p-4 space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Nhập mã (vd: FRESH10)"
+                      className="flex-1 rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-green-600/30"
+                    />
+                    <button
+                      type="button"
+                      onClick={previewCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                      className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50 disabled:opacity-60"
+                    >
+                      {couponLoading ? "Đang kiểm tra..." : "Kiểm tra mã"}
                     </button>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-gray-500 mt-3">
-                Mỗi đơn chỉ dùng 1 vé. Giảm theo % và giới hạn tối đa theo từng vé.
-              </p>
+                  </div>
+
+                  {couponError && <div className="text-sm text-red-600">{couponError}</div>}
+
+                  {couponPreview?.ok && Number.isFinite(couponPreview.percent) && (
+                    <div className="text-sm text-gray-700">
+                      Mã hợp lệ. Giảm <span className="font-semibold">{couponPreview.percent}%</span>. {" "}
+                      Ước tính giảm: {" "}
+                      <span className="font-semibold text-green-700">-{formatVND(toNumber(couponPreview.discount, 0))}</span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={!couponPreview?.ok}
+                      className="px-4 py-2 rounded-lg bg-green-600 text-white disabled:opacity-60"
+                    >
+                      Áp dụng mã
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCouponCode("");
+                        setCouponError("");
+                        setCouponPreview(null);
+                        setCouponApplied(false);
+                        setCouponAppliedCode(null);
+                      }}
+                      className="px-4 py-2 rounded-lg border"
+                    >
+                      Xoá
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-gray-500">Mã giảm giá không giới hạn theo người; số lượt được trừ khi thanh toán thành công.</p>
+                </div>
+              )}
             </Card>
 
             {/* Note */}
@@ -537,10 +651,16 @@ const PaymentPage = () => {
 
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">
-                      {selectedVoucher ? `Giảm từ vé (${selectedVoucher.percent}% - tối đa ${formatVND(selectedVoucher.cap)})` : "Giảm từ vé"}
+                      {mode === "points"
+                        ? selectedVoucher
+                          ? `Giảm từ vé (${selectedVoucher.percent}% - tối đa ${formatVND(selectedVoucher.cap)})`
+                          : "Giảm từ vé"
+                        : couponApplied && couponPreview?.ok
+                        ? `Giảm từ mã (${couponPreview.percent}%)`
+                        : "Giảm từ mã"}
                     </span>
                     <span className="font-medium text-green-600">
-                      - {formatVND(voucherDiscount)}
+                      - {formatVND(mode === "points" ? voucherDiscount : couponDiscount)}
                     </span>
                   </div>
 
@@ -556,9 +676,7 @@ const PaymentPage = () => {
                 >
                   Đặt hàng
                 </button>
-                <p className="mt-2 text-[11px] text-gray-500">
-                  Bằng cách đặt hàng, bạn đồng ý với Điều khoản & Chính sách của chúng tôi.
-                </p>
+                <p className="mt-2 text-[11px] text-gray-500">Bằng cách đặt hàng, bạn đồng ý với Điều khoản & Chính sách của chúng tôi.</p>
               </Card>
 
               <Card title="Câu hỏi thường gặp">
@@ -567,11 +685,7 @@ const PaymentPage = () => {
                     Vé giảm giá hoạt động thế nào?
                     <span className="text-gray-400 group-open:rotate-180 transition">▾</span>
                   </summary>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Mỗi vé yêu cầu số điểm tương ứng và áp dụng giảm theo %
-                    trên tạm tính, nhưng không vượt quá mức tối đa của vé.
-                    Mỗi đơn chỉ áp dụng 1 vé.
-                  </p>
+                  <p className="mt-2 text-sm text-gray-600">Mỗi vé yêu cầu số điểm tương ứng và áp dụng giảm theo % trên tạm tính, nhưng không vượt quá mức tối đa của vé. Mỗi đơn chỉ áp dụng 1 vé.</p>
                 </details>
                 <Divider />
                 <details className="group">
@@ -579,29 +693,12 @@ const PaymentPage = () => {
                     Bao lâu nhận được hàng?
                     <span className="text-gray-400 group-open:rotate-180 transition">▾</span>
                   </summary>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Đơn nội thành 3–5 tiếng, tỉnh 2–5 ngày tùy khu vực và phương thức nhận hàng.
-                  </p>
+                  <p className="mt-2 text-sm text-gray-600">Đơn nội thành 3–5 tiếng, tỉnh 2–5 ngày tùy khu vực và phương thức nhận hàng.</p>
                 </details>
               </Card>
             </div>
           </div>
         </div>
-
-        {/* Mobile bottom bar (optional)
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-gray-200 p-3 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-gray-500">Tổng thanh toán</p>
-            <p className="text-lg font-extrabold">{formatVND(finalTotal)}</p>
-          </div>
-          <button
-            onClick={handlePlaceOrder}
-            className="px-4 py-2 rounded-xl bg-black text-white font-semibold"
-          >
-            Đặt hàng
-          </button>
-        </div>
-        */}
       </div>
     </div>
   );
