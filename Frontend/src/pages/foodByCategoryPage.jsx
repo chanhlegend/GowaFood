@@ -305,11 +305,7 @@ const FoodByCategoryPage = () => {
           ))}
         </div>
 
-        {/* Footer nhỏ */}
-        <footer className="mt-10 text-center text-xs text-slate-400">
-          © {new Date().getFullYear()} Foodie • Tối ưu cho trải nghiệm mua sắm
-          🥗
-        </footer>
+       
       </div>
     </div>
   );

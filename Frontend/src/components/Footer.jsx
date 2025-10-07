@@ -108,7 +108,7 @@ export default function Footer() {
     <div className="mt-10">
       <div className="h-px bg-white/20 mb-4" />
       <p className="text-center text-sm text-white/80">
-        Copyright © 2025 <span className="font-semibold">SUNI GREEN FARM</span> | Cửa hàng rau sạch Organic Food
+        Copyright © 2025 <span className="font-semibold">GOWA FOOD</span> | Cửa hàng rau sạch Gowa Food
       </p>
     </div>
   </div>

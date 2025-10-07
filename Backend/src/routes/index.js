@@ -8,6 +8,7 @@ const recipeRoutes = require("./recipeRoutes");
 const payosRouter = require('./payos');
 const orderRouter = require('./orderRoute');
 const reviewRouter = require('./reviewRoutes');
+const giftCodeRoutes = require('./giftCodeRoutes');
 const addressRouter = require('./addressRoutes');
 function route(app) {
   app.use("/api/auth", authenRoutes);
@@ -20,6 +21,7 @@ function route(app) {
   app.use('/api/payos', payosRouter);
   app.use('/api/orders', orderRouter);
   app.use('/api/reviews', reviewRouter);
+  app.use('/api/gift-codes', giftCodeRoutes);
   app.use('/api/address', addressRouter);
 }
 

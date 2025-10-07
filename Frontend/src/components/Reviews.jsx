@@ -264,28 +264,50 @@ export default function Reviews({ productId, checkOrderHistory }) {
             Tất cả đánh giá ({stats.total})
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-500">Sắp xếp theo:</span>
-            <div className="flex gap-1">
-              {SORTS.map((s) => (
-                <Button
-                  key={s.key}
-                  size="sm"
-                  variant={sort === s.key ? "default" : "outline"}
-                  className={`h-8 ${
-                    sort === s.key
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setPage(1);
-                    setSort(s.key);
-                  }}
-                >
-                  {s.label}
-                </Button>
-              ))}
-            </div>
-          </div>
+  <span className="text-gray-500">Sắp xếp theo:</span>
+
+  {/* Mobile: dùng select (hiện khi < md) */}
+  <div className="md:hidden">
+    <select
+      className="h-9 px-3 rounded-md border border-gray-300 bg-white text-gray-700"
+      value={sort}
+      onChange={(e) => {
+        setPage(1);
+        setSort(e.target.value);
+      }}
+      aria-label="Sắp xếp theo"
+    >
+      {SORTS.map((s) => (
+        <option key={s.key} value={s.key}>
+          {s.label}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* Desktop / tablet: dùng các nút (ẩn trên mobile) */}
+  <div className="hidden md:flex gap-1">
+    {SORTS.map((s) => (
+      <Button
+        key={s.key}
+        size="sm"
+        variant={sort === s.key ? "default" : "outline"}
+        className={`h-8 ${
+          sort === s.key
+            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+            : ""
+        }`}
+        onClick={() => {
+          setPage(1);
+          setSort(s.key);
+        }}
+      >
+        {s.label}
+      </Button>
+    ))}
+  </div>
+</div>
+
         </div>
 
         {/* List */}
