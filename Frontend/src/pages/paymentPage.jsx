@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { UserService } from "../services/userService";
 import { ROUTE_PATH } from "../constants/routePath";
-import GiftCodeService from "@/services/GiftCodeService";
+import GiftCodeService from "@/services/giftCodeService";
 import { toast } from "sonner";
 
 const Pill = ({ active, onClick, children }) => (
