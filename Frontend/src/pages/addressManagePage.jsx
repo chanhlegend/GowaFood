@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { UserService } from '../services/userService'
 import { UserService as AuthService } from '../services/authenService'
+import { AddressService } from '../services/addressService'
 
 const AddressManagement = () => {
   const [user, setUser] = useState(null)
@@ -11,6 +12,25 @@ const AddressManagement = () => {
   const [editingAddress, setEditingAddress] = useState(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [addressToDelete, setAddressToDelete] = useState(null)
+  const [communes, setCommunes] = useState([])
+  const [loadingCommunes, setLoadingCommunes] = useState(false)
+
+  // Lấy danh sách communes từ API thông qua service
+  const fetchCommunes = async () => {
+    try {
+      setLoadingCommunes(true)
+      const data = await AddressService.getCommunesByProvince(79)
+      console.log('API Response:', data)
+      const communesList = data.data.communes || []
+      console.log('Communes loaded:', communesList)
+      setCommunes(communesList)
+    } catch (err) {
+      console.error('Error fetching communes:', err)
+      setError('Không thể tải danh sách xã/phường')
+    } finally {
+      setLoadingCommunes(false)
+    }
+  }
 
   // Lấy thông tin user từ localStorage
   useEffect(() => {
@@ -36,6 +56,7 @@ const AddressManagement = () => {
     }
 
     getUserData()
+    fetchCommunes()
   }, [])
 
   // Hàm xử lý đặt địa chỉ mặc định
@@ -277,11 +298,15 @@ const AddressManagement = () => {
                   <form onSubmit={(e) => {
                     e.preventDefault()
                     const formData = new FormData(e.target)
+                    const selectedWard = formData.get('ward')?.trim()
+                    const selectedCommune = communes.find(commune => commune.name === selectedWard)
+                    
                     const data = {
                       name: formData.get('name')?.trim(),
                       phone: formData.get('phone')?.trim(),
                       address: formData.get('address')?.trim(),
-                      ward: formData.get('ward')?.trim(),
+                      ward: selectedWard,
+                      wardCode: selectedCommune?.code || '',
                       city: formData.get('city')?.trim(),
                       isDefault: formData.get('isDefault') === 'on'
                     }
@@ -331,13 +356,22 @@ const AddressManagement = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Xã/Phường
                         </label>
-                        <input
-                          type="text"
+                        <select
                           name="ward"
                           defaultValue={editingAddress?.ward || ''}
                           required
                           className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                        />
+                          disabled={loadingCommunes}
+                        >
+                          <option value="">
+                            {loadingCommunes ? 'Đang tải...' : 'Chọn xã/phường'}
+                          </option>
+                          {communes.map((commune) => (
+                            <option key={commune.code} value={commune.name}>
+                              {commune.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       <div>
@@ -347,9 +381,11 @@ const AddressManagement = () => {
                         <input
                           type="text"
                           name="city"
-                          defaultValue={editingAddress?.city || ''}
+                          defaultValue="TP.Hồ Chí Minh"
+                          value="TP.Hồ Chí Minh"
+                          readOnly
                           required
-                          className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
                         />
                       </div>
 
