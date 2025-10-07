@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./ScrollToTop";
 import AppRoute from "./config/routes";
 import { Toaster } from "./lib/toaster";
-import { installPWA } from "./pwa"; // import từ pwa.js, KHÔNG import từ main.jsx
+import { installPWA } from "./pwa";
 
 const NotFound = () => <div className="p-6 text-center">404 - Không tìm thấy trang</div>;
 
