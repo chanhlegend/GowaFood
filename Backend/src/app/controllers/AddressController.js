@@ -4,8 +4,16 @@ class AddressController {
     // Lấy danh sách tất cả provinces
     async getProvinces(req, res) {
         try {
-            const response = await axios.get('https://production.cas.so/address-kit/2025-07-01/provinces');
-            res.json(response.data);
+            const response = await axios.get('https://production.cas.so/address-kit/2025-07-01/provinces', {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                responseType: 'text',
+                responseEncoding: 'utf8'
+            });
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.json(JSON.parse(response.data));
         } catch (error) {
             console.error('Error fetching provinces:', error);
             res.status(500).json({ 
@@ -19,8 +27,16 @@ class AddressController {
     async getDistrictsByProvince(req, res) {
         try {
             const { provinceId } = req.params;
-            const response = await axios.get(`https://production.cas.so/address-kit/2025-07-01/provinces/${provinceId}/districts`);
-            res.json(response.data);
+            const response = await axios.get(`https://production.cas.so/address-kit/2025-07-01/provinces/${provinceId}/districts`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                responseType: 'text',
+                responseEncoding: 'utf8'
+            });
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.json(JSON.parse(response.data));
         } catch (error) {
             console.error('Error fetching districts:', error);
             res.status(500).json({ 
@@ -34,8 +50,17 @@ class AddressController {
     async getCommunesByProvince(req, res) {
         try {
             const { provinceId } = req.params;
-            const response = await axios.get(`https://production.cas.so/address-kit/2025-07-01/provinces/${provinceId}/communes`);
-            res.json(response.data);
+            const response = await axios.get(`https://production.cas.so/address-kit/2025-07-01/provinces/${provinceId}/communes`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                responseType: 'text',
+                responseEncoding: 'utf8'
+            });
+            
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.json(JSON.parse(response.data));
         } catch (error) {
             console.error('Error fetching communes:', error);
             res.status(500).json({ 
@@ -49,8 +74,16 @@ class AddressController {
     async getCommunesByDistrict(req, res) {
         try {
             const { districtId } = req.params;
-            const response = await axios.get(`https://production.cas.so/address-kit/2025-07-01/districts/${districtId}/communes`);
-            res.json(response.data);
+            const response = await axios.get(`https://production.cas.so/address-kit/2025-07-01/districts/${districtId}/communes`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                responseType: 'text',
+                responseEncoding: 'utf8'
+            });
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.json(JSON.parse(response.data));
         } catch (error) {
             console.error('Error fetching communes by district:', error);
             res.status(500).json({ 
