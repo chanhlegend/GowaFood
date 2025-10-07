@@ -55,7 +55,7 @@ export function Header() {
           href: `/food-by-category/${cat._id}`,
         }))
       : []),
-    { name: "Công thức AI", href: "/chat-recipe-ai" },
+    { name: "Công thức nấu ăn", href: "/chat-recipe-ai" },
     // { name: "Giới thiệu", href: "/aboutus" },
   ];
 

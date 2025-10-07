@@ -21,8 +21,10 @@ const AddressManagement = () => {
       setLoadingCommunes(true)
       const data = await AddressService.getCommunesByProvince(79)
       console.log('API Response:', data)
-      const communesList = data.data.communes || []
-      console.log('Communes loaded:', communesList)
+      
+      // Dữ liệu có cấu trúc {communes: [...]}
+      const communesList = data.communes || []
+      console.log('Communes loaded:', communesList.length, 'items')
       setCommunes(communesList)
     } catch (err) {
       console.error('Error fetching communes:', err)
