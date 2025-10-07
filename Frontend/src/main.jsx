@@ -1,9 +1,13 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
+import "./index.css";
+import { setupPWA } from "./pwa";
 
-createRoot(document.getElementById('root')).render(
+setupPWA(); // chỉ gọi setup, KHÔNG export gì cho App import ngược lại
+
+createRoot(document.getElementById("root")).render(
   <>
     <App />
-  </>,
-)
+  </>
+);
