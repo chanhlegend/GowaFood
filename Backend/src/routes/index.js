@@ -4,7 +4,6 @@ const categoryRoutes = require("./categoryRoutes");
 const authRoutes = require("./authRoutes");
 const userRoutes = require("./userRoutes");
 const cartRoutes = require("./cartRoutes");
-const recipeRoutes = require("./recipeRoutes");
 const payosRouter = require('./payos');
 const orderRouter = require('./orderRoute');
 const reviewRouter = require('./reviewRoutes');
@@ -17,7 +16,6 @@ function route(app) {
   app.use("/api/users", userRoutes);
   app.use("/auth", authRoutes); // Đường dẫn cho OAuth
   app.use("/api/cart", cartRoutes);
-  app.use("/api/recipes", recipeRoutes);
   app.use('/api/payos', payosRouter);
   app.use('/api/orders', orderRouter);
   app.use('/api/reviews', reviewRouter);
