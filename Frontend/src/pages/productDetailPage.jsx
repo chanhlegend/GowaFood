@@ -1,5 +1,4 @@
-// src/pages/productDetailPage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef  } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Minus,
@@ -10,6 +9,12 @@ import {
   ArrowLeft,
   QrCode,
   Check,
+  Sprout,
+  Box,
+  Package,
+  Calendar,
+  Droplet,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductService } from "@/services/productService";
@@ -30,7 +35,7 @@ function makeSeededGrid(count, seed = 98765) {
 export default function ProductDetailPage() {
   const navigate = useNavigate();
   const { id: productId } = useParams();
-
+  
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -49,6 +54,7 @@ export default function ProductDetailPage() {
 
   const qrDots = useMemo(() => makeSeededGrid(8 * 8), []);
   const user = JSON.parse(localStorage.getItem("user_gowa")) || null;
+
   // Load product + related + viewed
   useEffect(() => {
     let mounted = true;
@@ -77,20 +83,21 @@ export default function ProductDetailPage() {
         } else {
           setCheckOrderHistory(false);
         }
+
         // Optional calls – chỉ chạy nếu service có
         try {
           if (typeof ProductService.getRelated === "function") {
             const rel = await ProductService.getRelated(productId);
             if (mounted) setRelatedProducts(Array.isArray(rel) ? rel : []);
           }
-        } catch (_) {}
+        } catch (_){}
 
         try {
           if (typeof ProductService.getRecentlyViewed === "function") {
             const viewed = await ProductService.getRecentlyViewed();
             if (mounted) setViewedProducts(Array.isArray(viewed) ? viewed : []);
           }
-        } catch (_) {}
+        } catch (_){}
       } catch (e) {
         if (!mounted) return;
         setError(e?.message || "Không thể tải sản phẩm");
@@ -123,6 +130,16 @@ export default function ProductDetailPage() {
     }
   };
 
+   const reviewsRef = useRef(null);
+
+   const handleScrollToReviews = () => {
+    if (reviewsRef.current) {
+      reviewsRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  };
   if (!productId) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
@@ -200,11 +217,7 @@ export default function ProductDetailPage() {
 
   // === Giá theo trọng lượng ===
   const rawPrice = Number.isFinite(product.price) ? product.price : 0;
-  const rawOriginal = Number.isFinite(product.originalPrice)
-    ? product.originalPrice
-    : Number.isFinite(product.compareAtPrice)
-    ? product.compareAtPrice
-    : 0;
+
 
   const weightFactor = selected === "500G" ? 0.5 : 1; // giảm nửa khi 500G
   const price = Math.max(0, Math.round(rawPrice * weightFactor));
@@ -212,35 +225,13 @@ export default function ProductDetailPage() {
   let originalPrice = 0;
   let discountPercent = 0;
 
-  if (rawOriginal > rawPrice) {
-    originalPrice = Math.round(rawOriginal * weightFactor);
-    discountPercent = Math.max(
-      0,
-      Math.round((1 - rawPrice / rawOriginal) * 100)
-    );
-  } else {
-    // fallback nếu không có originalPrice: giữ -27% như trước
-    const fallbackPercent = 27;
-    originalPrice =
-      price > 0 ? Math.round(price / (1 - fallbackPercent / 100)) : 0;
-    discountPercent = price > 0 ? fallbackPercent : 0;
-  }
+  
 
   const stock = Number.isFinite(product.stock) ? product.stock : undefined;
   const outOfStock = stock !== undefined && stock <= 0;
 
   const canInc = stock === undefined ? true : quantity < stock;
   const canDec = quantity > 1;
-
-  // Origin/QR từ data (fallback nếu thiếu)
-  const origin = product.origin || {};
-  const farmName = origin.farmName || "Nông trại";
-  const address = origin.address || "—";
-  const harvestDate = origin.harvestDate || product.harvestDate || "—";
-  const certs = Array.isArray(origin.certs)
-    ? origin.certs.join(", ")
-    : origin.certs || product.certs || "—";
-  const qrImage = product.qrImage || origin.qrImage || "";
 
   return (
     <div className="min-h-screen bg-white">
@@ -291,9 +282,8 @@ export default function ProductDetailPage() {
               aria-label="Yêu thích"
             >
               <Heart
-                className={`h-5 w-5 ${
-                  isFavorite ? "fill-red-500 text-red-500" : ""
-                }`}
+                className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""
+                  }`}
               />
             </Button>
 
@@ -311,11 +301,10 @@ export default function ProductDetailPage() {
               <button
                 key={i}
                 onClick={() => setSelectedImage(i)}
-                className={`min-w-[88px] md:min-w-0 aspect-square rounded-xl overflow-hidden border transition-colors ${
-                  selectedImage === i
-                    ? "border-green-600"
-                    : "border-gray-200 hover:border-green-300"
-                }`}
+                className={`min-w-[88px] md:min-w-0 aspect-square rounded-xl overflow-hidden border transition-colors ${selectedImage === i
+                  ? "border-green-600"
+                  : "border-gray-200 hover:border-green-300"
+                  }`}
                 aria-label={`Ảnh ${i + 1}`}
               >
                 <img
@@ -333,13 +322,29 @@ export default function ProductDetailPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">{product.name}</h1>
             <div className="flex items-center gap-2 mt-1">
-              {[...Array(5)].map((_, i) => (
+              {/* Render stars dynamically based on the product's rating */}
+              {/* {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                  className={`h-4 w-4 ${i < product.rating ? "fill-yellow-400 text-yellow-400" : "fill-gray-300 text-gray-300"}`}
                 />
-              ))}
-              <span className="text-sm text-gray-500">(24 đánh giá)</span>
+              ))} */}
+              <div className="flex items-center gap-2 mt-1">
+        {/* Render stars dynamically based on the product's rating */}
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-4 w-4 ${i < product.rating ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-300 text-gray-300'}`}
+          />
+        ))}
+        {/* Clickable text to scroll to the Reviews section */}
+        <span
+          className="text-sm text-gray-500 cursor-pointer"
+          onClick={handleScrollToReviews}
+        >
+          ({product.reviewCount} đánh giá)
+        </span>
+      </div>
             </div>
           </div>
 
@@ -366,10 +371,10 @@ export default function ProductDetailPage() {
                   Nguồn gốc sản phẩm
                 </h3>
                 <p className="text-sm text-green-700 truncate">
-                  Nông trại {farmName}{" "}
-                  {address && `- ${String(address).split(",")[0]}`}
+                  Tên sản phẩm: {product.name}{" "}
+                  {categoryName && `- Danh mục: ${categoryName}`}
                 </p>
-                <p className="text-xs text-green-600">Chứng nhận {certs}</p>
+                <p className="text-xs text-green-600">Số lô: {product.lotNumber}</p>
               </div>
               <Button
                 variant="outline"
@@ -389,11 +394,10 @@ export default function ProductDetailPage() {
                 <button
                   key={w}
                   onClick={() => setSelected(w)}
-                  className={`inline-flex h-9 items-center rounded-full px-3 text-sm font-medium ${
-                    selected === w
-                      ? "border-2 border-green-600 text-green-700 bg-white"
-                      : "border bg-white"
-                  }`}
+                  className={`inline-flex h-9 items-center rounded-full px-3 text-sm font-medium ${selected === w
+                    ? "border-2 border-green-600 text-green-700 bg-white"
+                    : "border bg-white"
+                    }`}
                 >
                   {w}
                 </button>
@@ -468,18 +472,195 @@ export default function ProductDetailPage() {
           </div>
 
           {product.description && (
-            <div className="pt-6 border-t">
-              <h3 className="font-semibold text-lg mb-2">Mô tả sản phẩm</h3>
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                {product.description}
-              </p>
+            <div className="pt-20  border-t w-full">
+              <h3 className="font-extrabold text-3xl  text-black font-semi">Thông tin sản phẩm</h3>
+
+              <div className="mb-4">
+                <button className="pt-1 pb-10 text-orange-950 border-b-1 border-amber-900 w-full text-left font-thin">
+                  Xem chi tiết nguồn gốc và quy trình sản xuất
+                </button>
+              </div>
+
+              {/* Subsection "Thông tin truy xuất nguồn gốc" with icon */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-white-100 dark:bg-green-900/10 rounded-lg">
+                  <Sprout className="w-5 h-5 text-green-600 dark:text-green-500" />
+                </div>
+                <h3 className="font-semibold text-xl text-foreground">Thông tin truy xuất nguồn gốc</h3>
+              </div>
+
+              {/* Table with details */}
+              <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
+                <table className="w-full table-auto">
+                  <tbody className="divide-y divide-gray-300">
+                    {/* Tên sản phẩm */}
+                    {product.name && (
+                      <tr className="hover:bg-gray-100 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
+                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                            }}>
+                              <Package className="w-5 h-5 text-green-600 dark:text-green-500" />
+                            </div>
+                            Tên sản phẩm
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-700 font-semibold">{product.name}</td>
+                      </tr>
+                    )}
+
+                    {/* Lô số */}
+                    {product.description.lotNumber && (
+                      <tr className="hover:bg-gray-100 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
+                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                            }}>
+                              <Box className="w-5 h-5 text-green-600 dark:text-green-500" />
+                            </div>
+                            Lô số
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">{product.description.lotNumber}</td>
+                      </tr>
+                    )}
+
+                    {/* Giống */}
+                    {product.description.variety && (
+                      <tr className="hover:bg-gray-100 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
+                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                            }}>
+                              <Sprout className="w-5 h-5 text-green-600 dark:text-green-500" />
+                            </div>
+                            Giống
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">{product.description.variety}</td>
+                      </tr>
+                    )}
+
+                    {/* Ngày gieo trồng */}
+                    {product.description.plantingDate && (
+                      <tr className="hover:bg-gray-100 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
+                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                            }}>
+                              <Calendar className="w-5 h-5 text-green-600 dark:text-green-500" />
+                            </div>
+                            Ngày gieo trồng
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">
+                          {new Date(product.description.plantingDate).toLocaleDateString('vi-VN')}
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Phân bón */}
+                    {product.description.fertilizer && product.description.fertilizer.length > 0 && (
+                      <tr className="hover:bg-gray-100 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
+                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                            }}>
+                              <Droplet className="w-5 h-5 text-green-600 dark:text-green-500" />
+                            </div>
+                            Phân bón
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">
+                          <div className="flex flex-wrap gap-1.5">
+                            {product.description.fertilizer.map((item, index) => (
+                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Thuốc BVTV */}
+                    {product.description.pesticide && product.description.pesticide.length > 0 && (
+                      <tr className="hover:bg-gray-100 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
+                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                            }}>
+                              <Shield className="w-5 h-5 text-green-600 dark:text-green-500" />
+                            </div>
+                            Thuốc BVTV
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">
+                          <div className="flex flex-wrap gap-1.5">
+                            {product.description.pesticide.map((item, index) => (
+                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Ngày thu hoạch */}
+                    {product.description.harvestDate && (
+                      <tr className="hover:bg-gray-100 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
+                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                            }}>
+                              <Calendar className="w-5 h-5 text-green-600 dark:text-green-500" />
+                            </div>
+                            Ngày thu hoạch
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">
+                          {new Date(product.description.harvestDate).toLocaleDateString('vi-VN')}
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Đóng gói tại */}
+                    {product.description.packaging && (
+                      <tr className="hover:bg-gray-100 transition-colors">
+                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
+                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                            }}>
+                              <Package className="w-5 h-5 text-dark-600 dark:text-green-500" />
+                            </div>
+                            Đóng gói tại
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">
+                          {product.description.packaging}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
+
         </div>
       </div>
 
       {/* Reviews block — đặt TRƯỚC Related */}
-      <div className="max-w-6xl mx-auto px-4 pb-10">
+      <div className="max-w-6xl mx-auto px-4 pb-10" ref={reviewsRef}>
         <Reviews
           productId={product._id}
           checkOrderHistory={checkOrderHistory}
@@ -546,6 +727,9 @@ export default function ProductDetailPage() {
           <div className="bg-green-800 text-white text-center py-3 rounded-t-xl mb-6">
             <h2 className="text-lg font-semibold tracking-wide">
               SẢN PHẨM ĐÃ XEM
+              <h2 className="text-lg font-semibold tracking-wide">
+                SẢN PHẨM ĐÃ XEM
+              </h2>
             </h2>
           </div>
 
@@ -606,34 +790,38 @@ export default function ProductDetailPage() {
               Nguồn gốc sản phẩm
             </h3>
 
-            <div className="mt-4 rounded-xl border bg-gray-50 p-4">
-              <div className="w-48 h-48 mx-auto rounded-xl bg-white flex items-center justify-center">
-                {qrImage ? (
-                  <img
-                    src={qrImage}
-                    alt="Mã QR nguồn gốc"
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <div className="grid grid-cols-8 gap-[2px]">
-                    {qrDots.map((on, i) => (
-                      <div
-                        key={i}
-                        className={`w-2 h-2 ${on ? "bg-black" : "bg-white"}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
             <div className="mt-4 text-sm text-center space-y-1">
-              <p className="font-semibold text-emerald-700">
-                Nông trại: {farmName}
-              </p>
-              <p className="text-gray-600">Địa chỉ: {address}</p>
-              <p className="text-gray-600">Ngày thu hoạch: {harvestDate}</p>
-              <p className="text-gray-600">Chứng nhận: {certs}</p>
+              {/* Hiển thị Tên sản phẩm */}
+              {product.name && (
+                <p className="font-semibold text-emerald-700">
+                  Tên sản phẩm: {product.name}
+                </p>
+              )}
+
+              {/* Hiển thị Giống */}
+              {product.description?.variety && (
+                <p className="text-gray-600">Giống: {product.description.variety}</p>
+              )}
+
+              {/* Hiển thị Ngày gieo trồng */}
+              {product.description?.plantingDate && (
+                <p className="text-gray-600">Ngày gieo trồng: {new Date(product.description.plantingDate).toLocaleDateString()}</p>
+              )}
+
+              {/* Hiển thị Phân bón */}
+              {product.description?.fertilizer && product.description.fertilizer.length > 0 && (
+                <p className="text-gray-600">Phân bón: {product.description.fertilizer.join(", ")}</p>
+              )}
+
+              {/* Hiển thị Thuốc BVTV */}
+              {product.description?.pesticide && product.description.pesticide.length > 0 && (
+                <p className="text-gray-600">Thuốc BVTV: {product.description.pesticide.join(", ")}</p>
+              )}
+
+              {/* Hiển thị Ngày thu hoạch */}
+              {product.description?.harvestDate && (
+                <p className="text-gray-600">Ngày thu hoạch: {new Date(product.description.harvestDate).toLocaleDateString()}</p>
+              )}
             </div>
 
             <Button
@@ -645,11 +833,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
-
-      {/* no-scrollbar utility (optional): thêm vào global css nếu cần
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      */}
     </div>
   );
 }

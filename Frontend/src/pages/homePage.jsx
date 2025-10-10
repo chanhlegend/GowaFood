@@ -156,9 +156,8 @@ function HeroCarousel() {
             key={i}
             onClick={() => setIndex(i)}
             aria-label={`Chuyển tới slide ${i + 1}`}
-            className={`h-2.5 w-2.5 rounded-full ${
-              i === index ? "bg-slate-800" : "bg-slate-400/70"
-            }`}
+            className={`h-2.5 w-2.5 rounded-full ${i === index ? "bg-slate-800" : "bg-slate-400/70"
+              }`}
           />
         ))}
       </div>
@@ -170,10 +169,15 @@ export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+
   // \u2192 THÊM TÌM KIẾM THEO TÊN
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
-
+  const [recentProducts, setRecentProducts] = useState([]);
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const userId = JSON.parse(localStorage.getItem("user_gowa"))?._id;
   useEffect(() => {
     (async () => {
       try {
@@ -184,6 +188,28 @@ export default function HomePage() {
         setProducts([]);
       } finally {
         setLoading(false);
+      }
+    })();
+    (async () => {
+      try {
+        const data = await ProductService.getRecentProducts(userId);
+        setRecentProducts(data || []);
+      } catch (e) {
+        console.error("Không thể tải sản phẩm đã mua", e);
+      } finally {
+        setLoadingRecent(false);
+      }
+    })();
+
+    // Lấy sản phẩm đề xuất
+    (async () => {
+      try {
+        const data = await ProductService.getRecommendedProducts(userId);
+        setRecommendedProducts(data || []);
+      } catch (e) {
+        console.error("Không thể tải sản phẩm đề xuất", e);
+      } finally {
+        setLoadingRecommended(false);
       }
     })();
   }, []);
@@ -319,6 +345,110 @@ export default function HomePage() {
           )}
         </div>
       </section>
+      {/* Section: Sản phẩm đã mua */}
+      {!loadingRecent && recentProducts.length > 0 && (
+        <section className="mt-7 mb-10">
+          <div className="flex items-center justify-between rounded-xl bg-custom-green px-5 py-4">
+            <div>
+              <h2 className="text-white font-bold tracking-wide text-base sm:text-lg">
+                Sản phẩm đã mua
+              </h2>
+              <p className="text-green-100 text-xs sm:text-sm mt-1">
+                Các sản phẩm bạn đã mua gần đây.
+              </p>
+            </div>
+      
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-5">
+            {recentProducts.slice(0, 8).map((p) => {
+              const img = (Array.isArray(p.images) && p.images[0]?.url) || "";
+              return (
+                <Link
+                  key={p._id || p.id}
+                  to={`/product/:id`.replace(":id", p._id || p.id)}
+                  className="group"
+                >
+                  <div className="rounded-2xl bg-white border border-green-100 shadow-sm hover:shadow-lg transition-all duration-150 hover:-translate-y-0.5">
+                    <div className="aspect-square w-full bg-green-50 border-b border-green-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
+                      {img ? (
+                        <img
+                          src={img}
+                          alt={p.name}
+                          className="max-h-[78%] max-w-[90%] object-contain"
+                        />
+                      ) : (
+                        <div className="text-slate-400 text-sm">(Không có ảnh)</div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <div className="text-slate-800 font-semibold text-sm sm:text-base line-clamp-2">
+                        {p.name}
+                      </div>
+                      <div className="mt-1 text-green-700 font-bold text-sm">
+                        {currencyVN(p.price)}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Section: Sản phẩm đề xuất */}
+      {!loadingRecommended && recommendedProducts.length > 0 && (
+        <section className="mt-7 mb-10">
+          <div className="flex items-center justify-between rounded-xl bg-custom-green px-5 py-4">
+            <div>
+              <h2 className="text-white font-bold tracking-wide text-base sm:text-lg">
+                Sản phẩm đề xuất
+              </h2>
+              <p className="text-green-100 text-xs sm:text-sm mt-1">
+                Các sản phẩm được đề xuất dành cho bạn.
+              </p>
+            </div>
+   
+    
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-5">
+            {recommendedProducts.slice(0, 8).map((p) => {
+              const img = (Array.isArray(p.images) && p.images[0]?.url) || "";
+              return (
+                <Link
+                  key={p._id || p.id}
+                  to={`/product/:id`.replace(":id", p._id || p.id)}
+                  className="group"
+                >
+                  <div className="rounded-2xl bg-white border border-green-100 shadow-sm hover:shadow-lg transition-all duration-150 hover:-translate-y-0.5">
+                    <div className="aspect-square w-full bg-green-50 border-b border-green-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
+                      {img ? (
+                        <img
+                          src={img}
+                          alt={p.name}
+                          className="max-h-[78%] max-w-[90%] object-contain"
+                        />
+                      ) : (
+                        <div className="text-slate-400 text-sm">(Không có ảnh)</div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <div className="text-slate-800 font-semibold text-sm sm:text-base line-clamp-2">
+                        {p.name}
+                      </div>
+                      <div className="mt-1 text-green-700 font-bold text-sm">
+                        {currencyVN(p.price)}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Section theo Category */}
       {groups.length === 0 ? (

@@ -13,4 +13,10 @@ router.get('/category/:categoryId', ProductController.getProductsByCategory);
 
 // Lấy sản phẩm theo ID
 router.get('/:id', ProductController.getProductById);
+
+// Lấy sản phẩm mới mua 
+router.get('/new-arrivals/recent/:userId', ProductController.getLastedPurchase);
+
+// Lấy sản phẩm đề xuất 
+router.get ('/recommendations/:userId', ProductController.getRelatedProduct);
 module.exports = router;
