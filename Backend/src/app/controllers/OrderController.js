@@ -1,5 +1,8 @@
 const Order = require("../models/Order");
 const Gifcode = require("../models/GiftCode");
+const mongoose = require("mongoose");
+const Product = require("../models/Product");
+
 const normalizeCode = (code = "") =>
   String(code || "")
     .trim()
@@ -10,6 +13,8 @@ const OrderController = {
     const session = await mongoose.startSession();
     try {
       const orderData = req.body;
+      console.log(orderData);
+      
 
       let savedOrder = null;
 
@@ -44,7 +49,32 @@ const OrderController = {
 
         // 2) Lưu đơn trong transaction
         const newOrder = new Order(orderData);
+
         savedOrder = await newOrder.save({ session });
+
+        
+      // trừ số lượng của hàng hóan trong kho
+
+      const products = orderData.products.map((item) => {
+        return {
+          _id: item.product,
+          quantity: item.quantity || 1,
+        }
+      });
+
+      // Lọc và lấy product theo ID
+      products.forEach(async (item) => {
+        const product = await Product.findById(item._id);
+        if (product) {
+          if (product.stock < item.quantity) {
+            return res.status(400).json({ message: `Sản phẩm ${product.name} không đủ số lượng trong kho.` });
+          }
+          product.stock -= item.quantity;
+          await product.save();
+        } else {
+          return res.status(404).json({ message: `Sản phẩm với ID ${item._id} không tồn tại.` });
+        }
+      });
       });
 
       return res
