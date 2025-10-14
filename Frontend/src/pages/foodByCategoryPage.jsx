@@ -268,7 +268,7 @@ const FoodByCategoryPage = () => {
         )}
 
         {/* Lưới sản phẩm (GIỮ NGUYÊN PHẦN SẢN PHẨM) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-5">
           {filteredProducts.map((product) => (
             <Link
               key={product._id || product.id}
