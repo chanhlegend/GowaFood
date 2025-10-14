@@ -154,8 +154,8 @@ export function Header() {
               className="flex items-center gap-3 sm:gap-4 group cursor-pointer"
             >
               <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300" />
-                <div className="relative bg-green-900 rounded-full p-1.5 sm:p-2 group-hover:scale-110 transition-transform duration-300">
+                <div className="absolute inset-0 border border-custom-green rounded-full transition-all duration-300" />
+                <div className="relative rounded-full p-1.5 sm:p-2 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src={Logo}
                     alt="GOWA Logo"

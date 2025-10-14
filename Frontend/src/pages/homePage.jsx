@@ -361,7 +361,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-5">
-            {recentProducts.slice(0, 8).map((p) => {
+            {recentProducts.slice(0, 10).map((p) => {
               const img = (Array.isArray(p.images) && p.images[0]?.url) || "";
               return (
                 <Link
@@ -414,7 +414,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-5">
-            {recommendedProducts.slice(0, 8).map((p) => {
+            {recommendedProducts.slice(0, 10).map((p) => {
               const img = (Array.isArray(p.images) && p.images[0]?.url) || "";
               return (
                 <Link
@@ -493,7 +493,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-5">
-              {g.items.slice(0, 8).map((p) => {
+              {g.items.slice(0, 10).map((p) => {
                 const img = (Array.isArray(p.images) && p.images[0]?.url) || "";
                 return (
                   <Link
