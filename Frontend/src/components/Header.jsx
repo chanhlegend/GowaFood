@@ -24,9 +24,11 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isAIDropdownOpen, setIsAIDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
   const userDropdownRef = useRef(null);
+  const aiDropdownRef = useRef(null);
 
   const [categories, setCategories] = useState([]);
 
@@ -55,7 +57,6 @@ export function Header() {
           href: `/food-by-category/${cat._id}`,
         }))
       : []),
-    { name: "Công thức nấu ăn", href: "/chat-recipe-ai" },
     // { name: "Giới thiệu", href: "/aboutus" },
   ];
 
@@ -125,16 +126,26 @@ export function Header() {
       ) {
         setIsUserDropdownOpen(false);
       }
+      if (
+        aiDropdownRef.current &&
+        !aiDropdownRef.current.contains(event.target)
+      ) {
+        setIsAIDropdownOpen(false);
+      }
     };
 
     if (isUserDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
+    if (isAIDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isUserDropdownOpen]);
+  }, [isUserDropdownOpen, isAIDropdownOpen]);
 
   return (
     <header className="sticky top-0 z-1050 w-full">
@@ -147,38 +158,38 @@ export function Header() {
         `}
       >
         <div className="bg-background/80 backdrop-blur-sm rounded-b-3xl shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex items-center justify-between h-20 sm:h-20 lg:h-20 px-4 sm:px-6 lg:px-10">
+          <div className="flex items-center justify-between h-16 xs:h-18 sm:h-20 lg:h-20 px-2 xs:px-3 sm:px-6 lg:px-10">
             {/* Logo */}
             <button
               onClick={() => navigate("/")}
-              className="flex items-center gap-3 sm:gap-4 group cursor-pointer"
+              className="flex items-center gap-2 xs:gap-3 sm:gap-4 group cursor-pointer"
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300" />
-                <div className="relative bg-green-900 rounded-full p-1.5 sm:p-2 group-hover:scale-110 transition-transform duration-300">
+                <div className="relative bg-green-900 rounded-full p-1 xs:p-1.5 sm:p-2 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src={Logo}
                     alt="GOWA Logo"
-                    className="h-12 w-12 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full object-cover"
+                    className="h-10 w-10 xs:h-12 xs:w-12 sm:h-10 sm:w-10 lg:h-12 lg:w-12 rounded-full object-cover"
                   />
                 </div>
               </div>
               <div className="flex flex-col">
-                <h1 className="text-2xl font-serif sm:text-2xl lg:text-3xl font-extrabold text-custom-green group-hover:text-green-600 transition-colors duration-300 leading-none">
+                <h1 className="text-xl xs:text-2xl font-serif sm:text-2xl lg:text-3xl font-extrabold text-custom-green group-hover:text-green-600 transition-colors duration-300 leading-none">
                   GOWA
                 </h1>
               </div>
             </button>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1.5 lg:gap-3">
+            <nav className="hidden md:flex items-center gap-1 xs:gap-2 lg:gap-3">
               {navigationItems.map((item) => (
                 <button
                   key={item.name}
                   onClick={() => navigate(item.href)}
                   className="
-                      relative px-3 py-2 lg:px-6 lg:py-3
-                      text-sm lg:text-[18px] font-semibold text-green-800
+                      relative px-2 py-1 xs:px-3 xs:py-2 lg:px-6 lg:py-3
+                      text-xs xs:text-sm lg:text-[18px] font-semibold text-green-800
                       rounded-lg transition-all duration-300 ease-in-out
                       hover:bg-muted hover:text-green-700 hover:scale-[1.03]
                       focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2
@@ -195,10 +206,71 @@ export function Header() {
                   />
                 </button>
               ))}
+
+              {/* AI Assistant Dropdown */}
+              <div className="relative" ref={aiDropdownRef}>
+                <button
+                  onClick={() => setIsAIDropdownOpen((o) => !o)}
+                  className="
+                    relative px-2 py-1 xs:px-3 xs:py-2 lg:px-6 lg:py-3
+                    text-xs xs:text-sm lg:text-[18px] font-semibold text-green-800
+                    rounded-lg transition-all duration-300 ease-in-out
+                    hover:bg-muted hover:text-green-700 hover:scale-[1.03]
+                    focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2
+                    group cursor-pointer
+                  "
+                >
+                  <span className="relative z-10">Trợ lý AI</span>
+                  <div
+                    className="
+                      absolute inset-0 bg-gradient-to-r from-green-600/10 to-green-700/10 
+                      rounded-lg opacity-0 group-hover:opacity-100 
+                      transition-opacity duration-300 ease-in-out
+                    "
+                  />
+                </button>
+                {isAIDropdownOpen && (
+                  <div
+                    className="
+                      absolute left-0 top-full mt-2 w-32 xs:w-36
+                      bg-white border border-gray-200 rounded-lg shadow-lg
+                      py-2 z-50
+                      animate-in slide-in-from-top-2 duration-200
+                    "
+                  >
+                    <button
+                      className="
+                        w-full text-left px-3 py-2 xs:px-4 xs:py-3 text-xs xs:text-sm text-gray-700
+                        hover:bg-gray-50 hover:text-green-700
+                        transition-colors duration-200
+                      "
+                      onClick={() => {
+                        setIsAIDropdownOpen(false);
+                        navigate("/chat-recipe-ai");
+                      }}
+                    >
+                      Trợ lý nấu ăn
+                    </button>
+                    <button
+                      className="
+                        w-full text-left px-3 py-2 xs:px-4 xs:py-3 text-xs xs:text-sm text-gray-700
+                        hover:bg-gray-50 hover:text-green-700
+                        transition-colors duration-200
+                      "
+                      onClick={() => {
+                        setIsAIDropdownOpen(false);
+                        navigate("/healthy-chat-ai");
+                      }}
+                    >
+                      Trợ lý dinh dưỡng
+                    </button>
+                  </div>
+                )}
+              </div>
             </nav>
 
             {/* Right side icons */}
-            <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+            <div className="flex items-center gap-1 xs:gap-2 sm:gap-3 lg:gap-4">
               {isLoggedIn ? (
                 <>
                   {/* User Account Dropdown */}
@@ -213,7 +285,7 @@ export function Header() {
                           focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                         "
                     >
-                      <User className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                      <User className="h-5 w-5 xs:h-6 xs:w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
                       <span className="sr-only">Tài khoản</span>
                     </Button>
 
@@ -221,7 +293,7 @@ export function Header() {
                     {isUserDropdownOpen && (
                       <div
                         className="
-                          absolute right-0 top-full mt-2 w-48
+                          absolute right-0 top-full mt-2 w-40 xs:w-48
                           bg-white border border-gray-200 rounded-lg shadow-lg
                           py-2 z-50
                           animate-in slide-in-from-top-2 duration-200
@@ -229,7 +301,7 @@ export function Header() {
                       >
                         <button
                           className="
-                              w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700
+                              w-full flex items-center gap-2 xs:gap-3 px-3 py-2 xs:px-4 xs:py-3 text-xs xs:text-sm text-gray-700
                               hover:bg-gray-50 hover:text-green-700
                               transition-colors duration-200
                             "
@@ -243,7 +315,7 @@ export function Header() {
                         </button>
                         <button
                           className="
-                           w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700
+                           w-full flex items-center gap-2 xs:gap-3 px-3 py-2 xs:px-4 xs:py-3 text-xs xs:text-sm text-gray-700
                            hover:bg-gray-50 hover:text-green-700
                             transition-colors duration-200  "
                           onClick={() => {
@@ -256,7 +328,7 @@ export function Header() {
                         </button>
                         <button
                           className="
-                              w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700
+                              w-full flex items-center gap-2 xs:gap-3 px-3 py-2 xs:px-4 xs:py-3 text-xs xs:text-sm text-gray-700
                               hover:bg-gray-50 hover:text-red-600
                               transition-colors duration-200
                             "
@@ -291,7 +363,7 @@ export function Header() {
   "
                     title="Theo dõi đơn hàng"
                   >
-                    <ClipboardList className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                    <ClipboardList className="h-5 w-5 xs:h-6 xs:w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
                     <span className="sr-only">Theo dõi đơn hàng</span>
                   </Button>
                   {/* Shopping Cart */}
@@ -305,12 +377,12 @@ export function Header() {
                         focus:ring-2 focus:ring-green-600 focus:ring-offset-2
                       "
                   >
-                    <ShoppingCart className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+                    <ShoppingCart className="h-5 w-5 xs:h-6 xs:w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
                     <div
                       className="
                           absolute -top-2 -right-2 bg-green-700 text-white
-                          text-[10px] sm:text-xs rounded-full
-                          h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center
+                          text-[10px] xs:text-xs rounded-full
+                          h-5 w-5 xs:h-6 xs:w-6 flex items-center justify-center
                           animate-pulse
                         "
                     >
@@ -331,7 +403,7 @@ export function Header() {
                     "
                   onClick={() => navigate("/login")}
                 >
-                  <span className="mr-15 px-3 py-2 bg-custom-green/20 rounded-xl hover:bg-custom-green/30  cursor-pointer text-center ">Đăng nhập</span>
+                  <span className="px-2 xs:px-3 py-1 xs:py-2 bg-custom-green/20 rounded-xl hover:bg-custom-green/30  cursor-pointer text-center text-xs xs:text-sm">Đăng nhập</span>
                 </Button>
               )}
 
@@ -343,7 +415,7 @@ export function Header() {
                 className="md:hidden hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700 transition-all duration-300 ease-in-out"
                 aria-label="Mở menu"
               >
-                <Menu className="h-7 w-7 sm:h-8 sm:w-8" />
+                <Menu className="h-6 w-6 xs:h-7 xs:w-7 sm:h-8 sm:w-8" />
               </Button>
             </div>
           </div>
@@ -374,8 +446,8 @@ export function Header() {
         <div
           className={`
             absolute top-0 right-0 h-full
-            w-72 sm:w-80 md:w-96
-            bg-white shadow-xl p-5 sm:p-6
+            w-64 xs:w-72 sm:w-80 md:w-96
+            bg-white shadow-xl p-4 xs:p-5 sm:p-6
             transition-transform duration-300 will-change-transform
             ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
           `}
@@ -385,31 +457,31 @@ export function Header() {
           {/* Close button */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="absolute top-4 right-4 text-gray-600 hover:text-black"
+            className="absolute top-3 right-3 xs:top-4 xs:right-4 text-gray-600 hover:text-black"
             aria-label="Đóng menu"
           >
-            <X className="h-6 w-6 sm:h-7 sm:w-7" />
+            <X className="h-5 w-5 xs:h-6 xs:w-6 sm:h-7 sm:w-7" />
           </button>
 
           {/* Logo & Title */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-2 xs:gap-3 mb-4 xs:mb-6">
             <img
               src={Logo}
               alt="GOWA Logo"
-              className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover"
+              className="h-8 w-8 xs:h-10 xs:w-10 sm:h-12 sm:w-12 rounded-full object-cover"
             />
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-green-700">
+              <h2 className="text-base xs:text-lg sm:text-xl font-bold text-green-700">
                 GOWA Food
               </h2>
-              <p className="text-sm sm:text-base text-green-800">
+              <p className="text-xs xs:text-sm sm:text-base text-green-800">
                 Thực phẩm sạch
               </p>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex flex-col gap-2 sm:gap-3">
+          <nav className="flex flex-col gap-1 xs:gap-2 sm:gap-3">
             {navigationItems.map((item) => (
               <button
                 key={item.name}
@@ -418,7 +490,7 @@ export function Header() {
                   navigate(item.href);
                 }}
                 className="
-                  w-full text-left px-4 py-3 text-base sm:text-lg lg:text-xl font-semibold text-green-800
+                  w-full text-left px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base sm:text-lg lg:text-xl font-semibold text-green-800
                   rounded-lg transition-all duration-300 ease-in-out
                   hover:bg-muted hover:text-green-700 hover:translate-x-2
                 "
@@ -426,24 +498,53 @@ export function Header() {
                 {item.name}
               </button>
             ))}
+
+            {/* AI Assistant links for mobile */}
+            <div className="mt-1 xs:mt-2" />
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                navigate("/chat-recipe-ai");
+              }}
+              className="
+                w-full text-left px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base sm:text-lg lg:text-xl font-semibold text-green-800
+                rounded-lg transition-all duration-300 ease-in-out
+                hover:bg-muted hover:text-green-700 hover:translate-x-2
+              "
+            >
+              Trợ lý nấu ăn
+            </button>
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                navigate("/healthy-chat-ai");
+              }}
+              className="
+                w-full text-left px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base sm:text-lg lg:text-xl font-semibold text-green-800
+                rounded-lg transition-all duration-300 ease-in-out
+                hover:bg-muted hover:text-green-700 hover:translate-x-2
+              "
+            >
+              Trợ lý dinh dưỡng
+            </button>
           </nav>
 
           {/* User Actions for Mobile */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-4 xs:mt-6 pt-4 xs:pt-6 border-t border-gray-200">
             {isLoggedIn ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1 xs:gap-2">
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     navigate("/profile");
                   }}
                   className="
-                    w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+                    w-full flex items-center gap-2 xs:gap-3 px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base font-semibold text-green-800
                     rounded-lg transition-all duration-300 ease-in-out
                     hover:bg-muted hover:text-green-700 hover:translate-x-2
                   "
                 >
-                  <UserCircle className="h-5 w-5" />
+                  <UserCircle className="h-4 w-4 xs:h-5 xs:w-5" />
                   Hồ sơ cá nhân
                 </button>
 
@@ -453,12 +554,12 @@ export function Header() {
                     navigate("/orders");
                   }}
                   className="
-    w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+    w-full flex items-center gap-2 xs:gap-3 px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base font-semibold text-green-800
     rounded-lg transition-all duration-300 ease-in-out
     hover:bg-muted hover:text-green-700 hover:translate-x-2
   "
                 >
-                  <ClipboardList className="h-5 w-5" />
+                  <ClipboardList className="h-4 w-4 xs:h-5 xs:w-5" />
                   Theo dõi đơn hàng
                 </button>
                 <button
@@ -476,12 +577,12 @@ export function Header() {
                     navigate("/");
                   }}
                   className="
-                    w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-red-600
+                    w-full flex items-center gap-2 xs:gap-3 px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base font-semibold text-red-600
                     rounded-lg transition-all duration-300 ease-in-out
                     hover:bg-red-50 hover:translate-x-2
                   "
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-4 w-4 xs:h-5 xs:w-5" />
                   Đăng xuất
                 </button>
               </div>
@@ -492,12 +593,12 @@ export function Header() {
                   navigate("/login");
                 }}
                 className="
-                  w-full flex items-center gap-3 px-4 py-3 text-base font-semibold text-green-800
+                  w-full flex items-center gap-2 xs:gap-3 px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base font-semibold text-green-800
                   rounded-lg transition-all duration-300 ease-in-out
                   hover:bg-muted hover:text-green-700 hover:translate-x-2
                 "
               >
-                <LogIn className="h-5 w-5" />
+                <LogIn className="h-4 w-4 xs:h-5 xs:w-5" />
                 Đăng nhập
               </button>
             )}
