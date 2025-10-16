@@ -400,6 +400,7 @@ export function Header() {
                       relative hover:bg-muted hover:scale-110 text-green-800 hover:text-green-700
                       transition-all duration-300 ease-in-out
                       focus:ring-2 focus:ring-green-600 focus:ring-offset-2
+                      mr-2 md:mr-0
                     "
                   onClick={() => navigate("/login")}
                 >
