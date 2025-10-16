@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import Groq from "groq-sdk"
 
-const AIFoodSuggestion = () => {
+const HealthyChatAI = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       content:
-        "Xin chào! Mình là Gowa. Hãy nói cho mình biết nguyên liệu, khẩu vị hay mục tiêu dinh dưỡng của bạn để mình gợi ý bữa ăn nhé.",
+        "Xin chào! Mình là trợ lí sức khỏe. Hãy nói cho mình biết tình trạng sức khỏe của bạn để mình gợi ý dinh dưỡng cho bạn nhé.",
     },
   ])
   const [input, setInput] = useState("")
@@ -42,7 +42,7 @@ const AIFoodSuggestion = () => {
           {
             role: "system",
             content:
-              "Bạn là Cookbot, trợ lý ẩm thực nói tiếng Việt. Bạn gợi ý thực đơn, công thức, khẩu phần và mẹo nấu nướng theo nguyên liệu sẵn có, sở thích, bệnh lý hoặc mục tiêu (giảm cân, tăng cơ...). Luôn ngắn gọn, có cấu trúc (tiêu đề, nguyên liệu, các bước), kèm ước lượng calories và macro khi phù hợp. Tránh dùng nguyên liệu khó tìm trừ khi người dùng yêu cầu. Lưu ý, bạn chỉ trả lời câu hỏi liên quan đến nấu ăn, nếu có câu hỏi ngoài lề, bạn chỉ có thể trả lời: 'Xin lỗi, tôi chỉ có thể trả lời câu hỏi liên quan đến nấu ăn.' và không trả lời gì thêm",
+              "Bạn là trợ lý dinh dưỡng nói tiếng Việt. Bạn gợi ý các chất dinh dưỡng và thực phẩm chứa các dinh dưỡng đó theo bệnh lý mà người dùng đưa ra. Luôn ngắn gọn, có cấu trúc (tiêu đề, chất dinh dưỡng, các loại thực phẩm chứa chất dinh dưỡng đó). Lưu ý, bạn chỉ trả lời câu hỏi liên quan đến dinh dưỡng, nếu có câu hỏi ngoài lề, bạn chỉ có thể trả lời: 'Xin lỗi, tôi chỉ có thể trả lời câu hỏi liên quan đến dinh dưỡng và sức khỏe.' và không trả lời gì thêm",
           },
           ...nextMessages,
         ],
@@ -63,7 +63,7 @@ const AIFoodSuggestion = () => {
     <div className="bg-gray-50 flex items-center justify-center p-2 sm:p-4">
       <div className="w-full max-w-2xl mx-auto h-[80vh] sm:h-[85vh] flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gowa - Trợ lý nấu ăn </h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gowa - Trợ lý dinh dưỡng </h1>
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-2 sm:px-4 py-3 space-y-3">
@@ -99,7 +99,7 @@ const AIFoodSuggestion = () => {
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Nhập nguyên liệu, mục tiêu hoặc món bạn muốn..."
+              placeholder="Nhập tình trạng bệnh lý của bạn..."
               className="flex-1 resize-none h-12 sm:h-14 max-h-40 px-3 sm:px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent text-sm sm:text-base"
               style={{ '--tw-ring-color': '#228B22' }}
               onFocus={(e) => (e.target.style.boxShadow = '0 0 0 2px #228B22')}
@@ -117,7 +117,7 @@ const AIFoodSuggestion = () => {
             </button>
           </div>
           <div className="px-1 pt-2 text-[11px] sm:text-xs text-gray-500">
-            Mẹo: Hãy mô tả rõ ràng số người ăn, khẩu vị, bếp/thiết bị, thời gian.
+            Mẹo: Hãy mô tả rõ ràng bệnh lý của bạn.
           </div>
         </form>
       </div>
@@ -125,4 +125,4 @@ const AIFoodSuggestion = () => {
   )
 }
 
-export default AIFoodSuggestion
+export default HealthyChatAI

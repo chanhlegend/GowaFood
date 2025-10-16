@@ -9,6 +9,7 @@ const VerifyPage = React.lazy(() => import("../pages/verifyOTPPage"));
 const ProfilePage = React.lazy(() => import("../pages/profilePage"));
 const AddressManagePage = React.lazy(() => import("../pages/addressManagePage"));
 const ChatRecipeAIPage = React.lazy(() => import("../pages/chatRecipeAI"));
+const HealthyChatAIPage = React.lazy(() => import("../pages/healthyChatAI"));
 const ProductDetailPage = React.lazy(() => import("../pages/productDetailPage"));
 // Product
 const CreateProductPage = React.lazy(() =>
@@ -44,6 +45,7 @@ const AppRoute = [
   { path: ROUTE_PATH.ADDRESS_MANAGE, page: AddressManagePage, layout: ProfileLayout },
   // RecipeAI
   { path: ROUTE_PATH.CHAT_RECIPE_AI, page: ChatRecipeAIPage, layout: MainLayout },
+  { path: ROUTE_PATH.HEALTHY_CHAT_AI, page: HealthyChatAIPage, layout: MainLayout },
 
   // Site
   { path: ROUTE_PATH.HOME, page: HomePage, layout: MainLayout },
