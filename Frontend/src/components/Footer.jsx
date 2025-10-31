@@ -1,6 +1,7 @@
 // src/components/Footer.jsx
 
-import { Phone, Mail, MapPin, ChevronRight } from "lucide-react"
+import { Phone, Mail, MapPin, ChevronRight, Facebook, Instagram } from "lucide-react"
+import { FaTiktok } from "react-icons/fa"
 // Đảm bảo file tồn tại tại: src/assets/images/logo.png
 import Logo from "../assets/images/logo.png"
 
@@ -27,12 +28,11 @@ export default function Footer() {
 
       {/* Giới thiệu */}
       <div className="md:col-span-4">
-        <h3 className="text-xl font-bold mb-3">Giới thiệu</h3>
+        <h3 className="text-xl font-bold mb-3">THÔNG TIN CÔNG TY</h3>
         <div className="space-y-2 text-white/90 text-sm">
-          <p>Công Ty CP Đầu Tư Và Phát Triển Nông Trại Hữu Cơ.</p>
-          <p>- Trụ sở chính: số 504 Nguyễn Tất Thành, phường 18, quận 4, Tp.Hồ Chí Minh</p>
-          <p>- Kho hàng: 504 Nguyễn Tất Thành, phường 18, quận 4, Tp.Hồ Chí Minh</p>
-          <p>- MST: 0316411616</p>
+          <p>Công ty TNHH Thực phẩm sạch GOWA</p>
+          <p>Địa chỉ: Số 4 Núi Thành, phường Tân Bình, thành phố Hồ Chí Minh</p>
+          <p>Mã số thuế: 0319065837</p>
         </div>
       </div>
 
@@ -41,11 +41,12 @@ export default function Footer() {
         <h3 className="text-xl font-bold mb-3">Liên kết</h3>
         <ul className="space-y-2">
           {[
-            { label: "Tìm kiếm", href: "#" },
-            { label: "Giới thiệu", href: "#" },
-            { label: "Chính sách đổi trả", href: "#" },
-            { label: "Chính sách bảo mật", href: "#" },
-            { label: "Điều khoản dịch vụ", href: "#" },
+            { label: "Về Gowa", href: "#" },
+            { label: "Tầm nhìn & Sứ mệnh", href: "#" },
+            { label: "Chính sách giao hàng", href: "#" },
+            { label: "Chính sách đổi trả và hoàn tiền", href: "#" },
+            { label: "Chương trình thành viên", href: "#" },
+            { label: " Hướng dẫn mua hàng", href: "#" },
           ].map((item) => (
             <li key={item.label}>
               <a
@@ -67,38 +68,55 @@ export default function Footer() {
         <div className="space-y-3 text-white/90 text-sm">
           <div className="flex items-start gap-3">
             <Phone className="h-5 w-5 mt-0.5" />
-            <div>Bán lẻ 08 9932 7766 | Bán sỉ 0379 588 499</div>
+            <div>0996455555</div>
           </div>
 
           <div className="flex items-start gap-3">
             <Mail className="h-5 w-5 mt-0.5" />
             <a
-              href="mailto:sale@sunigreenfarm.vn"
+              href="mailto:gowafoodvn@gmail.com"
               className="hover:text-white underline decoration-white/30"
             >
-              sale@sunigreenfarm.vn
+              gowafoodvn@gmail.com
             </a>
           </div>
 
           <div className="flex items-start gap-3">
             <MapPin className="h-5 w-5 mt-0.5" />
-            <div>504 Nguyễn Tất Thành, phường 18, quận 4, Tp.Hồ Chí Minh.</div>
+            <div>4 Núi Thành, phường Tân Bình, Thành Phố Hồ Chí Minh</div>
           </div>
 
           {/* line mảnh */}
           <div className="h-px bg-white/50 my-2" />
 
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {["Chanh Đào Mật Ong", "Cải Kale", "Cần Tây"].map((tag) => (
-              <a
-                key={tag}
-                href="#"
-                className="inline-flex items-center gap-2 hover:underline decoration-white/30"
-              >
-                <ChevronRight className="h-4 w-4" />
-                {tag}
-              </a>
-            ))}
+          <div className="flex items-center gap-4">
+            <a
+              href="https://www.facebook.com/gowacleanfood"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Facebook"
+            >
+              <Facebook className="h-6 w-6" />
+            </a>
+            <a
+              href="https://www.tiktok.com/@gowa.food"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="TikTok"
+            >
+              <FaTiktok className="h-6 w-6" />
+            </a>
+            <a
+              href="https://www.instagram.com/gowafoodvn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Instagram"
+            >
+              <Instagram className="h-6 w-6" />
+            </a>
           </div>
         </div>
       </div>

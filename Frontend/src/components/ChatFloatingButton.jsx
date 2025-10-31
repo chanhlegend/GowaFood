@@ -20,7 +20,7 @@ export default function ChatFloatingButton() {
   }, [open]);
 
   return (
-    <div className="fixed z-[1100] right-4 bottom-4 sm:right-8 sm:bottom-8 flex flex-col items-end gap-2">
+    <div className="fixed z-[9999] right-4 bottom-24 sm:right-8 sm:bottom-22 flex flex-col items-end gap-2">
       {/* Menu */}
       {open && (
         <div

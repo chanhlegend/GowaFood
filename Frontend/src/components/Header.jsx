@@ -51,6 +51,7 @@ export function Header() {
 
   const navigationItems = [
     { name: "Trang chủ", href: "/" },
+    { name: "Về Gowa", href: "/aboutus" },
     ...(Array.isArray(categories)
       ? categories.map((cat) => ({
           name: cat.name,
