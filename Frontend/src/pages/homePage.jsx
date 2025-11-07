@@ -6,7 +6,7 @@ import { ProductService } from "../services/productService";
 import banner1 from "../assets/images/banner_img_1.png";
 import banner2 from "../assets/images/banner_img_2.png";
 import banner3 from "../assets/images/banner_img_3.png";
-import slideshow1 from "../assets/images/slideshow_1.jpg";
+import slideshow1 from "../assets/images/slideshow_1.png";
 import slideshow2 from "../assets/images/slideshow_2.jpg";
 
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
@@ -15,7 +15,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/solid";
 const slides = [
   {
     id: 1,
-    title: "SUNI GREEN FARM",
+    title: "GOWA FARM",
     headline: "THAM GIA MEMBERSHIP",
     bullets: [
       "Giá thành viên ưu đãi lên đến 50%",
@@ -28,7 +28,7 @@ const slides = [
   {
     id: 2,
     title: "ƯU ĐÃI ĐẶC BIỆT",
-    headline: "NÔNG SẢN SẠCH CHO MỌI NHÀ",
+    headline: "CHỌN RAU LÀNH, SỐNG THÊM AN",
     bullets: [
       "Combo rau củ theo tuần",
       "Đảm bảo VietGAP",
@@ -40,7 +40,7 @@ const slides = [
   {
     id: 3,
     title: "FARM TO TABLE",
-    headline: "GIÁ TỐT - CHẤT LƯỢNG CAO",
+    headline: "AN TÂM CHẤT LƯỢNG  NHẸ GÁNH CHI TIÊU",
     bullets: [
       "Thu hoạch sáng – giao trong ngày",
       "Đổi trả trong 24h",
@@ -554,9 +554,8 @@ export default function HomePage() {
             Tiêu chuẩn chất lượng
           </h3>
           <p className="mt-2 text-slate-600 text-sm leading-relaxed">
-            Các vườn nông sản của Suni được ứng dụng nuôi trồng theo các tiêu
-            chí an toàn hữu cơ tối thiểu theo chứng nhận của VietGap, GlobalGap
-            & Organic USDA
+            Các vườn nông sản của Gowa được ứng dụng nuôi trồng theo các tiêu
+            chí an toàn hữu cơ tối thiểu theo chứng nhận của VietGap
           </p>
         </div>
         <div className="border border-green-500 rounded-lg p-6 text-center flex flex-col items-center">
