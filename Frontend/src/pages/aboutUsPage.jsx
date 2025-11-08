@@ -1,3 +1,5 @@
+
+import coverGowa from "../../public/cover_gowa.jpg";
 import {
   Target,
   Heart,
@@ -15,16 +17,14 @@ export default function AboutUsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
       {/* Hero Section */}
-      <section
-        className="relative w-full h-[400px] md:h-[500px] flex items-center justify-center text-white overflow-hidden"
-        style={{
-          backgroundImage: `url('/public/cover_gowa.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-  <div className="absolute inset-0 bg-gradient-to-r from-green-700/40 to-green-600/30 z-0"></div>
-        <div className="container mx-auto px-4 relative z-10 flex flex-col items-center justify-center h-full">
+      <section className="relative w-full h-[400px] md:h-[500px] flex items-center justify-center text-white overflow-hidden">
+        <img
+          src={coverGowa}
+          alt="Gowa Cover"
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-green-700/40 to-green-600/30 z-10"></div>
+        <div className="container mx-auto px-4 relative z-20 flex flex-col items-center justify-center h-full">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-center drop-shadow-lg">
             Về GOWA
           </h1>
