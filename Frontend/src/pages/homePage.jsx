@@ -7,7 +7,7 @@ import banner1 from "../assets/images/banner_img_1.png";
 import banner2 from "../assets/images/banner_img_2.png";
 import banner3 from "../assets/images/banner_img_3.png";
 import slideshow1 from "../assets/images/slideshow_1.png";
-import slideshow2 from "../assets/images/slideshow_2.jpg";
+import slideshow2 from "../assets/images/slideshow_2.png";
 
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
