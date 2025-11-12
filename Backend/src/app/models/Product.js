@@ -6,10 +6,9 @@ const ProductSchema = new mongoose.Schema(
     description: {
       lotNumber: String,
       variety: String,
-      plantingDate: Date,
       fertilizer: [{ type: String }],
       pesticide: [{ type: String }],
-      harvestDate: Date,
+      numberOfHarvestDays: Number,
       packaging: String,
     },
     price: { type: Number, required: true },

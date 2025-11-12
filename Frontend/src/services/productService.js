@@ -29,6 +29,7 @@ export const ProductService = {
           : productData.description.pesticide
           ? [productData.description.pesticide]
           : [],
+        numberOfHarvestDays: productData.description.numberOfHarvestDays ? Number(productData.description.numberOfHarvestDays) : undefined,
       };
 
       // Tạo product data với description đã được xử lý
