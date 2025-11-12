@@ -6,7 +6,6 @@ class ProductController {
     try {
       const products = await Product.find()
         .populate("category")
-        .populate("qrSource");
       res.status(200).json(products);
     } catch (err) {
       res.status(500).json({ message: "Lỗi server", error: err.message });
@@ -15,7 +14,7 @@ class ProductController {
 
   async createProduct(req, res) {
     try {
-      const { name, description, price, category, images, stock, qrSource } =
+      const { name, description, price, category, images, stock } =
         req.body;
 
       const updatedDescription = {
@@ -35,7 +34,6 @@ class ProductController {
         category,
         images,
         stock,
-        qrSource,
       });
 
       const savedProduct = await newProduct.save();
@@ -69,7 +67,6 @@ class ProductController {
       const { categoryId } = req.params;
       const products = await Product.find({ category: categoryId })
         .populate("category")
-        .populate("qrSource");
       res.status(200).json(products);
     } catch (err) {
       res.status(500).json({ message: "Lỗi server", error: err.message });

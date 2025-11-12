@@ -39,7 +39,6 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showQRCode, setShowQRCode] = useState(false);
   const [selected, setSelected] = useState("1KG");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -233,6 +232,15 @@ export default function ProductDetailPage() {
   const canInc = stock === undefined ? true : quantity < stock;
   const canDec = quantity > 1;
 
+  // Tính toán ngày thu hoạch và ngày gieo trồng
+  const today = new Date();
+  const harvestDate = new Date(today);
+  harvestDate.setDate(today.getDate() - 1); // Ngày hôm qua
+
+  const plantingDate = new Date(today);
+  const harvestDays = product.description?.numberOfHarvestDays || 0;
+  plantingDate.setDate(today.getDate() - harvestDays); // Ngày hôm nay trừ số ngày thu hoạch
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -270,7 +278,7 @@ export default function ProductDetailPage() {
               size="icon"
               className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white/85 rounded-lg"
               onClick={() => setShowQRCode(true)}
-              aria-label="Xem QR"
+              aria-label="Xem mã QR"
             >
               <QrCode className="h-5 w-5" />
             </Button>
@@ -362,29 +370,6 @@ export default function ProductDetailPage() {
                 -{discountPercent}%
               </span>
             )}
-          </div>
-
-          <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <h3 className="font-semibold text-green-800">
-                  Nguồn gốc sản phẩm
-                </h3>
-                <p className="text-sm text-green-700 truncate">
-                  Tên sản phẩm: {product.name}{" "}
-                  {categoryName && `- Danh mục: ${categoryName}`}
-                </p>
-                <p className="text-xs text-green-600">Số lô: {product.lotNumber}</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-green-300 text-green-700 rounded-lg"
-                onClick={() => setShowQRCode(true)}
-              >
-                <QrCode className="h-4 w-4 mr-2" /> Xem QR
-              </Button>
-            </div>
           </div>
 
           <div>
@@ -545,7 +530,7 @@ export default function ProductDetailPage() {
                     )}
 
                     {/* Ngày gieo trồng */}
-                    {product.description.plantingDate && (
+                    {product.description?.numberOfHarvestDays && (
                       <tr className="hover:bg-gray-100 transition-colors">
                         <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
                           <div className="flex items-center gap-2">
@@ -558,7 +543,7 @@ export default function ProductDetailPage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 text-gray-700">
-                          {new Date(product.description.plantingDate).toLocaleDateString('vi-VN')}
+                          {plantingDate.toLocaleDateString('vi-VN')}
                         </td>
                       </tr>
                     )}
@@ -614,7 +599,7 @@ export default function ProductDetailPage() {
                     )}
 
                     {/* Ngày thu hoạch */}
-                    {product.description.harvestDate && (
+                    {product.description?.numberOfHarvestDays && (
                       <tr className="hover:bg-gray-100 transition-colors">
                         <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
                           <div className="flex items-center gap-2">
@@ -627,7 +612,7 @@ export default function ProductDetailPage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 text-gray-700">
-                          {new Date(product.description.harvestDate).toLocaleDateString('vi-VN')}
+                          {harvestDate.toLocaleDateString('vi-VN')}
                         </td>
                       </tr>
                     )}
@@ -774,62 +759,6 @@ export default function ProductDetailPage() {
                 </div>
               );
             })}
-          </div>
-        </div>
-      )}
-
-      {/* QR Modal */}
-      {showQRCode && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-lg font-semibold text-center">
-              Nguồn gốc sản phẩm
-            </h3>
-
-            <div className="mt-4 text-sm text-center space-y-1">
-              {/* Hiển thị Tên sản phẩm */}
-              {product.name && (
-                <p className="font-semibold text-emerald-700">
-                  Tên sản phẩm: {product.name}
-                </p>
-              )}
-
-              {/* Hiển thị Giống */}
-              {product.description?.variety && (
-                <p className="text-gray-600">Giống: {product.description.variety}</p>
-              )}
-
-              {/* Hiển thị Ngày gieo trồng */}
-              {product.description?.plantingDate && (
-                <p className="text-gray-600">Ngày gieo trồng: {new Date(product.description.plantingDate).toLocaleDateString()}</p>
-              )}
-
-              {/* Hiển thị Phân bón */}
-              {product.description?.fertilizer && product.description.fertilizer.length > 0 && (
-                <p className="text-gray-600">Phân bón: {product.description.fertilizer.join(", ")}</p>
-              )}
-
-              {/* Hiển thị Thuốc BVTV */}
-              {product.description?.pesticide && product.description.pesticide.length > 0 && (
-                <p className="text-gray-600">Thuốc BVTV: {product.description.pesticide.join(", ")}</p>
-              )}
-
-              {/* Hiển thị Ngày thu hoạch */}
-              {product.description?.harvestDate && (
-                <p className="text-gray-600">Ngày thu hoạch: {new Date(product.description.harvestDate).toLocaleDateString()}</p>
-              )}
-            </div>
-
-            <Button
-              onClick={() => setShowQRCode(false)}
-              className="mt-4 w-full h-11 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold"
-            >
-              Đóng
-            </Button>
           </div>
         </div>
       )}

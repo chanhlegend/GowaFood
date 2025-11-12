@@ -54,17 +54,15 @@ const initialState = {
         title: "",
         lotNumber: "",
         variety: "",
-        plantingDate: "",
         fertilizer: [],
         pesticide: [],
-        harvestDate: "",
+        numberOfHarvestDays: "",
         packaging: "",
     },
     price: "",
     category: "",
     images: [],
     stock: "",
-    qrSource: "",
 };
 
 const CreateProductPage = () => {
@@ -180,18 +178,6 @@ const CreateProductPage = () => {
                 </div>
 
                 <div style={{ marginBottom: 18 }}>
-                    <label style={labelStyle}>Ngày gieo trồng</label>
-                    <input
-                        name="description.plantingDate"
-                        value={form.description.plantingDate}
-                        onChange={handleChange}
-                        type="date"
-                        style={inputStyle}
-                        placeholder="Ngày gieo trồng"
-                    />
-                </div>
-
-                <div style={{ marginBottom: 18 }}>
                     <label style={labelStyle}>Phân bón</label>
                     <input
                         name="description.fertilizer"
@@ -214,14 +200,14 @@ const CreateProductPage = () => {
                 </div>
 
                 <div style={{ marginBottom: 18 }}>
-                    <label style={labelStyle}>Ngày thu hoạch</label>
+                    <label style={labelStyle}>Số Ngày thu hoạch</label>
                     <input
-                        name="description.harvestDate"
-                        value={form.description.harvestDate}
+                        name="description.numberOfHarvestDays"
+                        value={form.description.numberOfHarvestDays}
                         onChange={handleChange}
-                        type="date"
+                        type="number"
                         style={inputStyle}
-                        placeholder="Ngày thu hoạch"
+                        placeholder="Số Ngày thu hoạch"
                     />
                 </div>
 
@@ -315,18 +301,6 @@ const CreateProductPage = () => {
                             ))}
                         </div>
                     )}
-                </div>
-
-                {/* QR Source */}
-                <div style={{ marginBottom: 18 }}>
-                    <label style={labelStyle}>QR Source (ID)</label>
-                    <input
-                        name="qrSource"
-                        value={form.qrSource}
-                        onChange={handleChange}
-                        style={inputStyle}
-                        placeholder="ID QR Source"
-                    />
                 </div>
 
                 {/* Error and Success messages */}
