@@ -179,6 +179,69 @@ const OrderController = {
       });
     }
   },
+
+  // Bestsellers aggregation by month/year
+  async getBestsellersByMonthYear(req, res) {
+    try {
+      const { month, year, limit } = req.query;
+      const m = Number(month);
+      const y = Number(year);
+      const top = Math.max(1, Math.min(Number(limit) || 8, 50));
+
+      if (!m || !y || m < 1 || m > 12) {
+        return res.status(400).json({ message: "Thiếu hoặc sai month/year" });
+      }
+
+      const start = new Date(y, m - 1, 1, 0, 0, 0, 0);
+      const end = new Date(y, m, 1, 0, 0, 0, 0);
+
+      const pipeline = [
+        {
+          $match: {
+            createdAt: { $gte: start, $lt: end },
+            status: { $ne: "CANCELLED" },
+          },
+        },
+        { $unwind: "$products" },
+        {
+          $group: {
+            _id: "$products.product",
+            totalQuantity: { $sum: { $ifNull: ["$products.quantity", 1] } },
+          },
+        },
+        { $sort: { totalQuantity: -1 } },
+        { $limit: top },
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "_id",
+            as: "product",
+          },
+        },
+        { $unwind: "$product" },
+        {
+          $project: {
+            _id: 0,
+            productId: "$product._id",
+            name: "$product.name",
+            totalQuantity: 1,
+          },
+        },
+      ];
+
+      const rows = await Order.aggregate(pipeline);
+      return res.status(200).json({
+        message: "Top sản phẩm bán chạy",
+        data: rows,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        message: "Lỗi khi tổng hợp sản phẩm bán chạy",
+        error: err?.message || String(err),
+      });
+    }
+  },
 };
 
 module.exports = OrderController;
