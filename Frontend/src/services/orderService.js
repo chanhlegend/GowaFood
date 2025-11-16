@@ -103,6 +103,25 @@ const OrderService = {
       };
     }
   },
+
+  // Get bestsellers by month/year
+  getBestsellers: async ({ month, year, limit = 8 }) => {
+    try {
+      const response = await axios.get(`${API_URL}/bestsellers`, {
+        params: { month, year, limit },
+      });
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message || "Lấy top sản phẩm bán chạy thành công",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Không thể lấy top sản phẩm bán chạy",
+      };
+    }
+  },
 };
 
 export default OrderService;

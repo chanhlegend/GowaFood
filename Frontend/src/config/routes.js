@@ -32,6 +32,10 @@ const OrdersPage = React.lazy(() => import("../pages/orderListPage"));
 const OrderDetailPage = React.lazy(() => import("../pages/orderDetailPage"));
 const OrderNewPage = React.lazy(() => import("../pages/orderNewPage"));
 const AboutUsPage = React.lazy(() => import("../pages/aboutUsPage"));
+
+//Admin Dashboard
+const AdminDashboardPage = React.lazy(() => import("../pages/AdminDashboard"));
+
 // Cấu hình route
 const AppRoute = [
   // Auth
@@ -63,8 +67,10 @@ const AppRoute = [
   // ==== ORDER MANAGEMENT ====
   { path: ROUTE_PATH.ORDERS, page: OrdersPage, layout: MainLayout },
   { path: ROUTE_PATH.ORDER_DETAIL, page: OrderDetailPage, layout: MainLayout },
-  { path: ROUTE_PATH.ORDER_NEW, page: OrderNewPage, layout: MainLayout }
+  { path: ROUTE_PATH.ORDER_NEW, page: OrderNewPage, layout: MainLayout },
 
+  //Admin Dashboard
+  { path: ROUTE_PATH.ADMIN_DASHBOARD, page: AdminDashboardPage, layout: MainLayout },
 ];
 
 export default AppRoute;

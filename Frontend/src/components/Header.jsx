@@ -26,6 +26,7 @@ export function Header() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isAIDropdownOpen, setIsAIDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
   const userDropdownRef = useRef(null);
   const aiDropdownRef = useRef(null);
@@ -86,14 +87,23 @@ export function Header() {
           const user = JSON.parse(userData);
           console.log("user from localStorage:", user._id);
 
+          // detect admin role
+          const roleLike = user?.role ?? user?.roles ?? user?.isAdmin;
+          let admin = false;
+          if (typeof roleLike === "string") admin = roleLike.toLowerCase() === "admin";
+          else if (typeof roleLike === "boolean") admin = roleLike;
+          setIsAdmin(!!admin);
+
           const itemCount = await CartService.getItemCount(user._id);
           setCartItemCount(itemCount || 0);
         } catch (error) {
           console.error("Failed to parse user data:", error);
+          setIsAdmin(false);
         }
       } else {
         // Reset cart count khi đăng xuất
         setCartItemCount(0);
+        setIsAdmin(false);
       }
     };
 
@@ -207,6 +217,30 @@ export function Header() {
                   />
                 </button>
               ))}
+
+              {isAdmin && (
+                <button
+                  onClick={() => navigate('/admin-dashboard')}
+                  className="
+                      relative px-2 py-1 xs:px-3 xs:py-2 lg:px-6 lg:py-3
+                      text-xs xs:text-sm lg:text-[18px] font-semibold text-green-800
+                      rounded-lg transition-all duration-300 ease-in-out
+                      hover:bg-muted hover:text-green-700 hover:scale-[1.03]
+                      focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2
+                      group cursor-pointer
+                    "
+                  title="Phân tích"
+                >
+                  <span className="relative z-10">Phân tích</span>
+                  <div
+                    className="
+                        absolute inset-0 bg-gradient-to-r from-green-600/10 to-green-700/10 
+                        rounded-lg opacity-0 group-hover:opacity-100 
+                        transition-opacity duration-300 ease-in-out
+                      "
+                  />
+                </button>
+              )}
 
               {/* AI Assistant Dropdown */}
               <div className="relative" ref={aiDropdownRef}>
@@ -500,6 +534,22 @@ export function Header() {
                 {item.name}
               </button>
             ))}
+
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  navigate('/admin-dashboard');
+                }}
+                className="
+                  w-full text-left px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base sm:text-lg lg:text-xl font-semibold text-green-800
+                  rounded-lg transition-all duration-300 ease-in-out
+                  hover:bg-muted hover:text-green-700 hover:translate-x-2
+                "
+              >
+                Phân tích
+              </button>
+            )}
 
             {/* AI Assistant links for mobile */}
             <div className="mt-1 xs:mt-2" />

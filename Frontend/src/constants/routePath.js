@@ -35,4 +35,6 @@ export const ROUTE_PATH = {
   ORDER_DETAIL: "/orders/:id",    
   ORDER_NEW: "/orders/new", 
 
+  //Admin Dashboard
+  ADMIN_DASHBOARD: '/admin-dashboard',
 };
