@@ -53,10 +53,18 @@ const LoginForm = () => {
       localStorage.setItem("user_gowa", JSON.stringify(user.user));
       // Trigger custom event để Header cập nhật
       window.dispatchEvent(new Event('authChange'));
+      const roleLike = user?.user?.role ?? user?.user?.roles ?? user?.user?.isAdmin;
+      let isAdmin = false;
+      if (typeof roleLike === 'string') isAdmin = roleLike.toLowerCase() === 'admin';
+      else if (typeof roleLike === 'boolean') isAdmin = roleLike;
       toast.success("Đăng nhập thành công!");
       setTimeout(() => {
-        appNavigate(ROUTE_PATH.HOME);
-      }, 1500);
+        if (isAdmin) {
+          appNavigate(ROUTE_PATH.ADMIN_DASHBOARD);
+        } else {
+          appNavigate(ROUTE_PATH.HOME);
+        }
+      }, 800);
     } catch (err) {
       setError(err.message || "Đăng nhập thất bại. Vui lòng thử lại.");
     } finally {
