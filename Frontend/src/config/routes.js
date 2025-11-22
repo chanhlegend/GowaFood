@@ -2,6 +2,7 @@ import React from "react";
 import { ROUTE_PATH } from "../constants/routePath";
 import MainLayout from "../layouts/MainLayout";
 import ProfileLayout from "../layouts/ProfileLayout";
+import AdminLayout from "../layouts/AdminLayout";
 // Auth
 const RegisterPage = React.lazy(() => import("../pages/registerPage"));
 const LoginPage = React.lazy(() => import("../pages/loginPage"));
@@ -43,7 +44,7 @@ const AppRoute = [
   { path: ROUTE_PATH.LOGIN, page: LoginPage, layout: MainLayout },
   { path: ROUTE_PATH.VERIFY, page: VerifyPage, layout: MainLayout },
   // Product
-  { path: ROUTE_PATH.CREATE_PRODUCT, page: CreateProductPage },
+  { path: ROUTE_PATH.CREATE_PRODUCT, page: CreateProductPage, layout: AdminLayout },
   { path: ROUTE_PATH.PRODUCT_DETAIL, page: ProductDetailPage, layout: MainLayout },
   // User
   { path: ROUTE_PATH.PROFILE, page: ProfilePage, layout: ProfileLayout },
@@ -70,7 +71,7 @@ const AppRoute = [
   { path: ROUTE_PATH.ORDER_NEW, page: OrderNewPage, layout: MainLayout },
 
   //Admin Dashboard
-  { path: ROUTE_PATH.ADMIN_DASHBOARD, page: AdminDashboardPage, layout: MainLayout },
+  { path: ROUTE_PATH.ADMIN_DASHBOARD, page: AdminDashboardPage, layout: AdminLayout },
 ];
 
 export default AppRoute;
