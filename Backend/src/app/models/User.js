@@ -21,6 +21,9 @@ const UserSchema = new mongoose.Schema(
         address: { type: String, required: true }, // Địa chỉ chi tiết
         ward: { type: String, required: true }, // Xã/Phường
         city: { type: String, required: true }, // Thành phố/Tỉnh
+        latitude: { type: Number }, // Vĩ độ
+        longitude: { type: Number}, // Kinh độ
+        distanceToStore: { type: Number }, // Khoảng cách đến cửa hàng (nếu cần)
         isDefault: { type: Boolean, default: false }, // Địa chỉ mặc định
       }
     ],

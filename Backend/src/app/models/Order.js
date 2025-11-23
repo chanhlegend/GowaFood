@@ -15,6 +15,7 @@ const OrderSchema = new mongoose.Schema({
   },
   amounts: {
     rawSubtotal: { type: Number, required: true },
+    shippingFee: { type: Number, required: true },
     subtotalAfterPoints: { type: Number, required: true },
     total: { type: Number, required: true },
   },

@@ -65,11 +65,10 @@ class UserController {
             const userId = req.params.id;
             const addressData = req.body;
             
-            console.log('Adding address for user:', userId);
             console.log('Address data:', addressData);
             
             // Validate dữ liệu đầu vào
-            const { name, phone, address, ward, city } = addressData;
+            const { name, phone, address, ward, city} = addressData;
             if (!name || !phone || !address || !ward || !city) {
                 return res.status(400).json({ 
                     message: 'Vui lòng nhập đầy đủ thông tin địa chỉ' 
