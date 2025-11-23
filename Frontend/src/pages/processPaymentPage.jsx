@@ -70,6 +70,11 @@ export default function ProcessPaymentPage() {
     return items.reduce((s, it) => s + Number(it?.lineTotal || 0), 0);
   }, [order, items]);
 
+  const shippingFee = useMemo(() => {
+    if (typeof order?.amounts?.shippingFee === "number") return order.amounts.shippingFee;
+    return 0;
+  }, [order]);
+
   // 3) Nếu PaymentPage dùng "Vé giảm giá", discount được gửi như:
   //    discount: { type:'POINT_VOUCHER', voucherId, pointsSpent, percent, cap, discountApplied }
   //    -> map sang schema:
@@ -154,6 +159,7 @@ export default function ProcessPaymentPage() {
       },
       amounts: {
         rawSubtotal, // bắt buộc
+        shippingFee, // bắt buộc
         subtotalAfterPoints, // bắt buộc (alias subtotalAfterDiscount)
         total, // bắt buộc
       },
@@ -578,9 +584,9 @@ export default function ProcessPaymentPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Sau giảm</span>
+                    <span className="text-gray-600">Tiền vận chuyển</span>
                     <span className="font-medium">
-                      {formatVND(subtotalAfterDiscount)}
+                      {formatVND(shippingFee)}
                     </span>
                   </div>
 

@@ -171,6 +171,7 @@ export default function OrderDetailPage() {
             amounts: {
               rawSubtotal: o.amounts?.rawSubtotal ?? 0,
               subtotalAfterPoints: o.amounts?.subtotalAfterPoints ?? 0,
+              shippingFee: o.amounts?.shippingFee ?? 0,
               total: o.amounts?.total ?? 0,
             },
 
@@ -547,9 +548,9 @@ export default function OrderDetailPage() {
                   </span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="text-neutral-600">Tạm tính sau điểm</span>
+                  <span className="text-neutral-600">Tiền vận chuyển</span>
                   <span className="text-neutral-800">
-                    {formatVND(order.amounts?.subtotalAfterPoints)}
+                    {formatVND(order.amounts?.shippingFee)}
                   </span>
                 </div>
                 <div className="flex justify-between gap-3">
