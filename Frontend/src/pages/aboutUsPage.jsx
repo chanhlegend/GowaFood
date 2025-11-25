@@ -1,5 +1,6 @@
 
 import coverGowa from "../../public/cover_gowa.jpg";
+import certificate from "../../public/certificate.jpg";
 import {
   Target,
   Heart,
@@ -276,6 +277,31 @@ export default function AboutUsPage() {
                     <span className="text-gray-500">&gt;15tr (+10%)</span>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Certificate Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center text-green-800 mb-6">
+              Chứng nhận & Cam kết Chất lượng
+            </h2>
+            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+              GOWA tự hào với các chứng nhận về an toàn thực phẩm và quy trình 
+              sản xuất theo tiêu chuẩn quốc tế, đảm bảo mang đến sản phẩm tốt nhất 
+              cho người tiêu dùng.
+            </p>
+            <div className="bg-gradient-to-br from-green-50 to-white rounded-3xl shadow-2xl overflow-hidden">
+              <div className="p-8 md:p-12">
+                <img
+                  src={certificate}
+                  alt="GOWA Certificate"
+                  className="w-full h-auto rounded-2xl shadow-lg hover:scale-105 transition-transform duration-300"
+                />
               </div>
             </div>
           </div>
