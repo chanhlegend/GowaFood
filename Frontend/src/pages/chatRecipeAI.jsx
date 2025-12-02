@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import Groq from "groq-sdk"
+import { ProductService } from "@/services/productService"
+import { ROUTE_PATH } from "@/constants/routePath"
 
 const AIFoodSuggestion = () => {
+  const navigate = useNavigate()
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -12,6 +16,7 @@ const AIFoodSuggestion = () => {
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [products, setProducts] = useState([])
   const scrollRef = useRef(null)
 
   const groq = new Groq({
@@ -19,10 +24,60 @@ const AIFoodSuggestion = () => {
     dangerouslyAllowBrowser: true,
   })
 
+  // Fetch products from database
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await ProductService.getAllProducts()
+        setProducts(data)
+      } catch (err) {
+        console.error("Error fetching products:", err)
+      }
+    }
+    fetchProducts()
+  }, [])
+
   useEffect(() => {
     if (!scrollRef.current) return
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [messages, loading])
+
+  // Tìm sản phẩm phù hợp từ câu hỏi người dùng và câu trả lời AI
+  const findRelevantProducts = (userQuestion, aiAnswer = "") => {
+    // Trích xuất phần nguyên liệu từ câu trả lời AI
+    const ingredientsSection = aiAnswer.match(/\*\*Nguyên liệu:\*\*([\s\S]*?)(\*\*|$)/i)
+    const ingredientsText = ingredientsSection ? ingredientsSection[1] : ""
+    
+    const ingredientsLower = ingredientsText.toLowerCase()
+    const fullSearchText = (userQuestion + " " + aiAnswer).toLowerCase()
+    
+    // Tách sản phẩm thành 2 nhóm: có trong nguyên liệu và không có trong nguyên liệu
+    const productsInIngredients = []
+    const productsInOther = []
+    
+    products.forEach(product => {
+      const nameLower = product.name?.toLowerCase() || ""
+      const categoryLower = product.category?.name?.toLowerCase() || ""
+      
+      // Kiểm tra xem sản phẩm có trong phần nguyên liệu không
+      const isInIngredients = ingredientsLower.includes(nameLower) || 
+                             nameLower.split(" ").some(word => word.length > 2 && ingredientsLower.includes(word))
+      
+      // Kiểm tra xem sản phẩm có liên quan đến toàn bộ câu trả lời không
+      const isRelevant = fullSearchText.includes(nameLower) || 
+                        nameLower.split(" ").some(word => word.length > 2 && fullSearchText.includes(word)) ||
+                        fullSearchText.includes(categoryLower)
+      
+      if (isInIngredients) {
+        productsInIngredients.push(product)
+      } else if (isRelevant) {
+        productsInOther.push(product)
+      }
+    })
+    
+    // Ưu tiên sản phẩm trong nguyên liệu, sau đó mới đến sản phẩm khác
+    return [...productsInIngredients, ...productsInOther].slice(0, 5)
+  }
 
   const sendMessage = async (e) => {
     e?.preventDefault()
@@ -34,6 +89,9 @@ const AIFoodSuggestion = () => {
     setInput("")
     setLoading(true)
     try {
+      // Lọc bỏ thuộc tính products trước khi gửi đến Groq API
+      const messagesForAPI = nextMessages.map(({ role, content }) => ({ role, content }))
+      
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         temperature: 0.3,
@@ -44,19 +102,34 @@ const AIFoodSuggestion = () => {
             content:
               "Bạn là Cookbot, trợ lý ẩm thực nói tiếng Việt. Bạn gợi ý thực đơn, công thức, khẩu phần và mẹo nấu nướng theo nguyên liệu sẵn có, sở thích, bệnh lý hoặc mục tiêu (giảm cân, tăng cơ...). Luôn ngắn gọn, có cấu trúc (tiêu đề, nguyên liệu, các bước), kèm ước lượng calories và macro khi phù hợp. Tránh dùng nguyên liệu khó tìm trừ khi người dùng yêu cầu. Lưu ý, bạn chỉ trả lời câu hỏi liên quan đến nấu ăn, nếu có câu hỏi ngoài lề, bạn chỉ có thể trả lời: 'Xin lỗi, tôi chỉ có thể trả lời câu hỏi liên quan đến nấu ăn.' và không trả lời gì thêm",
           },
-          ...nextMessages,
+          ...messagesForAPI,
         ],
       })
 
       const answer = completion?.choices?.[0]?.message?.content?.trim() ||
         "Xin lỗi, hiện mình chưa có câu trả lời. Hãy thử hỏi lại nhé."
-      setMessages((prev) => [...prev, { role: "assistant", content: answer }])
+      
+      // Tìm sản phẩm liên quan từ cả câu hỏi và câu trả lời
+      const relevantProducts = findRelevantProducts(trimmed, answer)
+      
+      setMessages((prev) => [
+        ...prev, 
+        { 
+          role: "assistant", 
+          content: answer,
+          products: relevantProducts.length > 0 ? relevantProducts : null
+        }
+      ])
     } catch (err) {
       console.error(err)
       setError("Không thể kết nối Groq. Vui lòng kiểm tra VITE_GROQ_API_KEY và thử lại.")
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleProductClick = (productId) => {
+    navigate(ROUTE_PATH.PRODUCT_DETAIL.replace(':id', productId))
   }
 
   return (
@@ -68,14 +141,51 @@ const AIFoodSuggestion = () => {
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-2 sm:px-4 py-3 space-y-3">
           {messages.map((m, idx) => (
-            <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`${
-                  m.role === "user" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-900"
-                } max-w-[85%] sm:max-w-[75%] px-3 py-2 sm:px-4 sm:py-3 rounded-2xl whitespace-pre-wrap leading-relaxed`}
-              >
-                {m.content}
+            <div key={idx}>
+              <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`${
+                    m.role === "user" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-900"
+                  } max-w-[85%] sm:max-w-[75%] px-3 py-2 sm:px-4 sm:py-3 rounded-2xl whitespace-pre-wrap leading-relaxed`}
+                >
+                  {m.content}
+                </div>
               </div>
+
+              {/* Hiển thị sản phẩm gợi ý */}
+              {m.products && m.products.length > 0 && (
+                <div className="mt-3 flex justify-start">
+                  <div className="max-w-[85%] sm:max-w-[75%] w-full">
+                    <p className="text-sm text-gray-600 px-2 mb-2">💡 Sản phẩm phù hợp có sẵn của chúng tôi:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {m.products.map((product) => (
+                        <div
+                          key={product._id}
+                          onClick={() => handleProductClick(product._id)}
+                          className="flex flex-col gap-2 p-2 bg-white border border-gray-200 rounded-lg hover:shadow-md cursor-pointer transition-all"
+                        >
+                          <img
+                            src={product.images?.[0].url || "/placeholder.jpg"}
+                            alt={product.name}
+                            className="w-full h-24 object-cover rounded-md"
+                          />
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 text-xs line-clamp-2">{product.name}</h3>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-green-600 font-semibold text-xs">
+                                {product.price?.toLocaleString()}đ
+                              </p>
+                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
 
