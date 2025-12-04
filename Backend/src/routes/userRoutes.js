@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const UserController = require('../app/controllers/UserController');
 
+// Lấy tất cả người dùng (phải đặt trước route /:id để tránh bị đè)
+router.get('/getAllUsers', UserController.getAllUsers);
+
 // Lấy thông tin người dùng
 router.get('/:id', UserController.getUserInfo);
 

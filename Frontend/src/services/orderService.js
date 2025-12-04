@@ -122,6 +122,22 @@ const OrderService = {
       };
     }
   },
+
+  getAllOrders: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/getAllOrders`);
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message || "Lấy danh sách tất cả đơn hàng thành công",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Không thể lấy danh sách tất cả đơn hàng",
+      };
+    }
+  },
 };
 
 export default OrderService;

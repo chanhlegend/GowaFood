@@ -84,5 +84,15 @@ export const UserService = {
         } catch (error) {
             throw error.response ? error.response.data : new Error("Network Error");
         }
-    }
+    },
+
+    // Lấy tất cả người dùng
+    getAllUsers: async () => {
+        try {
+            const response = await axios.get(`${API_URL}/getAllUsers`);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : new Error("Network Error");
+        }
+    },
 };
