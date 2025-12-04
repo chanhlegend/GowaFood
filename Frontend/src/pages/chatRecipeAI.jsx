@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Groq from "groq-sdk"
+import Fuse from "fuse.js"
 import { ProductService } from "@/services/productService"
 import { ROUTE_PATH } from "@/constants/routePath"
+import { normalize, tokenize, extractIngredients, createProductFinder, highlightText } from "@/utils/productMatchingUtils.jsx"
 
 const AIFoodSuggestion = () => {
   const navigate = useNavigate()
@@ -17,6 +19,8 @@ const AIFoodSuggestion = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [products, setProducts] = useState([])
+  const fuseRef = useRef(null)
+  const findRelevantProducts = useRef(null)
   const scrollRef = useRef(null)
 
   const groq = new Groq({
@@ -24,12 +28,36 @@ const AIFoodSuggestion = () => {
     dangerouslyAllowBrowser: true,
   })
 
-  // Fetch products from database
+  // Fetch products from database and preprocess for matching
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const data = await ProductService.getAllProducts()
-        setProducts(data)
+        // Preprocess: add normalized name, tokens and keywords
+        const enhanced = (data || []).map((p) => {
+          const normName = normalize(p.name || "")
+          const tokens = tokenize(p.name || "")
+          const keywordsSet = new Set([normName, ...tokens])
+          // include synonyms or keywords stored in product if available
+          if (Array.isArray(p.keywords)) p.keywords.forEach((k) => keywordsSet.add(normalize(k)))
+          if (Array.isArray(p.synonyms)) p.synonyms.forEach((s) => keywordsSet.add(normalize(s)))
+          return { ...p, __normName: normName, __tokens: tokens, __keywords: Array.from(keywordsSet) }
+        })
+        setProducts(enhanced)
+        // build fuse index
+        try {
+          fuseRef.current = new Fuse(enhanced, {
+            keys: ['__normName', '__keywords', 'category.name'],
+            threshold: 0.4, // Increased threshold for better precision
+            ignoreLocation: true,
+            includeScore: true,
+          })
+          // Initialize memoized product finder
+          findRelevantProducts.current = createProductFinder(enhanced, fuseRef)
+        } catch (err) {
+          fuseRef.current = null
+          console.warn('Fuse initialize failed', err)
+        }
       } catch (err) {
         console.error("Error fetching products:", err)
       }
@@ -37,47 +65,11 @@ const AIFoodSuggestion = () => {
     fetchProducts()
   }, [])
 
+  // Tìm sản phẩm phù hợp từ câu hỏi người dùng và câu trả lời AI
   useEffect(() => {
     if (!scrollRef.current) return
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [messages, loading])
-
-  // Tìm sản phẩm phù hợp từ câu hỏi người dùng và câu trả lời AI
-  const findRelevantProducts = (userQuestion, aiAnswer = "") => {
-    // Trích xuất phần nguyên liệu từ câu trả lời AI
-    const ingredientsSection = aiAnswer.match(/\*\*Nguyên liệu:\*\*([\s\S]*?)(\*\*|$)/i)
-    const ingredientsText = ingredientsSection ? ingredientsSection[1] : ""
-    
-    const ingredientsLower = ingredientsText.toLowerCase()
-    const fullSearchText = (userQuestion + " " + aiAnswer).toLowerCase()
-    
-    // Tách sản phẩm thành 2 nhóm: có trong nguyên liệu và không có trong nguyên liệu
-    const productsInIngredients = []
-    const productsInOther = []
-    
-    products.forEach(product => {
-      const nameLower = product.name?.toLowerCase() || ""
-      const categoryLower = product.category?.name?.toLowerCase() || ""
-      
-      // Kiểm tra xem sản phẩm có trong phần nguyên liệu không
-      const isInIngredients = ingredientsLower.includes(nameLower) || 
-                             nameLower.split(" ").some(word => word.length > 2 && ingredientsLower.includes(word))
-      
-      // Kiểm tra xem sản phẩm có liên quan đến toàn bộ câu trả lời không
-      const isRelevant = fullSearchText.includes(nameLower) || 
-                        nameLower.split(" ").some(word => word.length > 2 && fullSearchText.includes(word)) ||
-                        fullSearchText.includes(categoryLower)
-      
-      if (isInIngredients) {
-        productsInIngredients.push(product)
-      } else if (isRelevant) {
-        productsInOther.push(product)
-      }
-    })
-    
-    // Ưu tiên sản phẩm trong nguyên liệu, sau đó mới đến sản phẩm khác
-    return [...productsInIngredients, ...productsInOther].slice(0, 5)
-  }
 
   const sendMessage = async (e) => {
     e?.preventDefault()
@@ -109,8 +101,8 @@ const AIFoodSuggestion = () => {
       const answer = completion?.choices?.[0]?.message?.content?.trim() ||
         "Xin lỗi, hiện mình chưa có câu trả lời. Hãy thử hỏi lại nhé."
       
-      // Tìm sản phẩm liên quan từ cả câu hỏi và câu trả lời
-      const relevantProducts = findRelevantProducts(trimmed, answer)
+      // Tìm sản phẩm liên quan từ cả câu hỏi và câu trả lời (with memoization)
+      const relevantProducts = findRelevantProducts.current ? findRelevantProducts.current(trimmed, answer) : []
       
       setMessages((prev) => [
         ...prev, 
@@ -156,32 +148,37 @@ const AIFoodSuggestion = () => {
               {m.products && m.products.length > 0 && (
                 <div className="mt-3 flex justify-start">
                   <div className="max-w-[85%] sm:max-w-[75%] w-full">
-                    <p className="text-sm text-gray-600 px-2 mb-2">💡 Sản phẩm phù hợp có sẵn của chúng tôi:</p>
+                    <p className="text-sm text-gray-600 px-2 mb-2">💡 Sản phẩm có thể phù hợp với nhu cầu của bạn:</p>
                     <div className="grid grid-cols-2 gap-2">
-                      {m.products.map((product) => (
-                        <div
-                          key={product._id}
-                          onClick={() => handleProductClick(product._id)}
-                          className="flex flex-col gap-2 p-2 bg-white border border-gray-200 rounded-lg hover:shadow-md cursor-pointer transition-all"
-                        >
-                          <img
-                            src={product.images?.[0].url || "/placeholder.jpg"}
-                            alt={product.name}
-                            className="w-full h-24 object-cover rounded-md"
-                          />
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900 text-xs line-clamp-2">{product.name}</h3>
-                            <div className="flex items-center justify-between mt-1">
-                              <p className="text-green-600 font-semibold text-xs">
-                                {product.price?.toLocaleString()}đ
-                              </p>
-                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
+                      {m.products.map((item) => {
+                        const product = item.product || item
+                        const matchedTokens = item.matchedTokens || []
+                        return (
+                          <div
+                            key={product._id || product.id}
+                            onClick={() => handleProductClick(product._id || product.id)}
+                            className="flex flex-col gap-2 p-2 bg-white border border-gray-200 rounded-lg hover:shadow-md cursor-pointer transition-all"
+                          >
+                            <img
+                              src={product.images?.[0].url || "/placeholder.jpg"}
+                              alt={product.name}
+                              className="w-full h-24 object-cover rounded-md"
+                            />
+                            <div className="flex-1">
+                              <h3 className="font-medium text-gray-900 text-xs line-clamp-2">{highlightText(product.name, matchedTokens)}</h3>
+                              {/* matchedTokens badges removed per request */}
+                              <div className="flex items-center justify-between mt-1">
+                                <p className="text-green-600 font-semibold text-xs">
+                                  {product.price?.toLocaleString()}đ
+                                </p>
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
