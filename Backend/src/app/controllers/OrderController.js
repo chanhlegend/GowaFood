@@ -242,6 +242,21 @@ const OrderController = {
       });
     }
   },
+
+  async getAllOrders(req, res) {
+    try {
+      const orders = await Order.find()
+        .sort({ createdAt: -1 })
+        .populate("products.product")
+        .populate("user");
+      res.status(200).json({ message: "Danh sách tất cả đơn hàng", data: orders });
+    } catch (err) {
+      res.status(500).json({
+        message: "Lỗi khi lấy danh sách tất cả đơn hàng",
+        error: err.message,
+      });
+    }
+  },
 };
 
 module.exports = OrderController;

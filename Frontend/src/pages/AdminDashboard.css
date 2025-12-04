@@ -141,8 +141,11 @@
 }
 
 .nav-tabs {
-  border-bottom: 0;
-  display: none; /* Hide original tabs since we have stat cards */
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 20px;
 }
 
 .nav-tabs .nav-link {
@@ -267,4 +270,85 @@
 /* Tighten legend area and tooltip font */
 .chartjs-tooltip {
   font-weight: 700;
+}
+
+/* Table Styles for Orders Tab */
+.table {
+  border-collapse: collapse;
+}
+
+.table thead.table-dark {
+  background: linear-gradient(90deg, rgba(44, 62, 180, 1) 0%, rgba(102, 126, 234, 1) 100%);
+}
+
+.table thead.table-dark th {
+  font-weight: 700;
+  border: none;
+  padding: 12px;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid rgba(34, 41, 59, 0.08);
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(102, 126, 234, 0.05);
+}
+
+.table tbody td {
+  padding: 12px;
+  vertical-align: middle;
+  font-size: 0.95rem;
+}
+
+.table tbody strong {
+  color: #2c2f4a;
+  font-weight: 700;
+}
+
+.table .badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+/* Pagination Styles */
+.pagination {
+  margin-top: 20px;
+  gap: 4px;
+}
+
+.page-item .page-link {
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: rgba(102, 126, 234, 1);
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.page-item .page-link:hover:not(.disabled) {
+  background-color: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.6);
+}
+
+.page-item.active .page-link {
+  background-color: rgba(102, 126, 234, 1);
+  color: white;
+  border-color: rgba(102, 126, 234, 1);
+}
+
+.page-item.disabled .page-link {
+  color: #ccc;
+  border-color: #ddd;
+  cursor: not-allowed;
+}
+
+/* Table responsive */
+.table-responsive {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(34, 41, 59, 0.08);
 }

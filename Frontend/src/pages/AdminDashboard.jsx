@@ -1,6 +1,7 @@
 // AdminDashboard.jsx
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { ProductService } from "@/services/productService";
+import dashboardService from "@/services/dashboardService";
 import Chart from "chart.js/auto";
 import "./AdminDashboard.css";
 
@@ -13,7 +14,10 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("revenue");
   const [productsTime, setProductsTime] = useState("all");
   const [usersYear, setUsersYear] = useState(String(currentYear));
-  const [bestsellerMode, setBestsellerMode] = useState("thongke"); 
+  const [bestsellerMode, setBestsellerMode] = useState("thongke");
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [allOrders, setAllOrders] = useState([]);
+  const ordersPerPage = 10; 
 
   const [bestsellerFilter, setBestsellerFilter] = useState({
     month: String(currentMonth),
@@ -44,6 +48,76 @@ const AdminDashboard = () => {
   const bestsellersCompareChartRef1 = useRef(null);
   const bestsellersCompareChartRef2 = useRef(null);
 
+  // ===== STATE UNTUK DATA DARI API =====
+  const [revenueMonthlyData, setRevenueMonthlyData] = useState(Array(12).fill(0));
+  const [productsMonthlyData, setProductsMonthlyData] = useState(Array(12).fill(0));
+  const [productsYearlyData, setProductsYearlyData] = useState([]);
+  const [productsYearlyLabels, setProductsYearlyLabels] = useState([]);
+  const [productsQuarterlyData, setProductsQuarterlyData] = useState([0, 0, 0, 0]);
+  const [usersMonthlyData, setUsersMonthlyData] = useState(Array(12).fill(0));
+  const [statsData, setStatsData] = useState({
+    monthRevenue: 0,
+    monthProducts: 0,
+    totalUsers: 0,
+  });
+
+  // ===== FETCH DATA TỪ API =====
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      // Lấy doanh thu theo tháng
+      const revenueRes = await dashboardService.getRevenueByMonth(currentYear);
+      if (revenueRes.success) {
+        setRevenueMonthlyData(revenueRes.data);
+      }
+
+      // Lấy số sản phẩm bán ra theo tháng
+      const productsRes = await dashboardService.getProductsSoldByMonth(currentYear);
+      if (productsRes.success) {
+        setProductsMonthlyData(productsRes.data);
+      }
+
+      // Lấy số sản phẩm bán ra theo năm
+      const productsYearRes = await dashboardService.getProductsSoldByYear();
+      if (productsYearRes.success) {
+        setProductsYearlyData(productsYearRes.data);
+        setProductsYearlyLabels(productsYearRes.years);
+      }
+
+      // Lấy số sản phẩm bán ra theo quý
+      const productsQuarterRes = await dashboardService.getProductsSoldByQuarter(currentYear);
+      if (productsQuarterRes.success) {
+        setProductsQuarterlyData(productsQuarterRes.data);
+      }
+
+      // Lấy số người dùng cộng dồn theo tháng
+      const usersRes = await dashboardService.getUsersCumulativeByMonth(currentYear);
+      if (usersRes.success) {
+        setUsersMonthlyData(usersRes.data);
+      }
+
+      // Lấy stats cho tháng hiện tại
+      const [monthRevRes, monthProdsRes, totalUsersRes] = await Promise.all([
+        dashboardService.getCurrentMonthRevenue(),
+        dashboardService.getCurrentMonthProductsSold(),
+        dashboardService.getTotalUsers(),
+      ]);
+
+      setStatsData({
+        monthRevenue: monthRevRes.success ? monthRevRes.revenue : 0,
+        monthProducts: monthProdsRes.success ? monthProdsRes.quantity : 0,
+        totalUsers: totalUsersRes.success ? totalUsersRes.count : 0,
+      });
+
+      // Lấy tất cả đơn hàng
+      const ordersRes = await dashboardService.getAllOrders();
+      if (ordersRes.success) {
+        setAllOrders(ordersRes.data);
+      }
+    };
+
+    fetchDashboardData();
+  }, [currentYear]);
+
   // ===== DỮ LIỆU GIỐNG BẢN HTML GỐC =====
   const revenueData = useMemo(() => ({
     labels: [
@@ -63,26 +137,23 @@ const AdminDashboard = () => {
     datasets: [
       {
         label: "Doanh Thu (VNĐ)",
-        data: [
-          12000000, 15000000, 18000000, 20000000, 25000000, 22000000, 28000000,
-          30000000, 32000000, 35000000, 38000000, 40000000,
-        ],
+        data: revenueMonthlyData,
         borderColor: "rgba(102, 126, 234, 1)",
         backgroundColor: "rgba(102, 126, 234, 0.2)",
         fill: true,
         tension: 0.1,
       },
     ],
-  }), []);
+  }), [revenueMonthlyData]);
 
   const productsDataByTime = useMemo(() => ({
     all: {
-      labels: ["2022", "2023", "2024"],
-      data: [5000, 7000, 9000],
+      labels: productsYearlyLabels.length > 0 ? productsYearlyLabels : ["2022", "2023", "2024"],
+      data: productsYearlyData.length > 0 ? productsYearlyData : [0, 0, 0],
     },
     year: {
-      labels: ["2022", "2023", "2024"],
-      data: [5000, 7000, 9000],
+      labels: productsYearlyLabels.length > 0 ? productsYearlyLabels : ["2022", "2023", "2024"],
+      data: productsYearlyData.length > 0 ? productsYearlyData : [0, 0, 0],
     },
     month: {
       labels: [
@@ -99,19 +170,19 @@ const AdminDashboard = () => {
         "Tháng 11",
         "Tháng 12",
       ],
-      data: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400],
+      data: productsMonthlyData,
     },
     quarter: {
       labels: ["Quý 1", "Quý 2", "Quý 3", "Quý 4"],
-      data: [1200, 2100, 3000, 3900],
+      data: productsQuarterlyData,
     },
-  }), []);
+  }), [productsMonthlyData, productsYearlyData, productsYearlyLabels, productsQuarterlyData]);
 
   const usersDataByYear = useMemo(() => ({
-    [String(currentYear)]: [1000, 1200, 1500, 1800, 2000, 2200, 2500, 2800, 3000, 3200, 3500, 3800],
+    [String(currentYear)]: usersMonthlyData,
     "2023": [800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000],
     "2022": [600, 700, 900, 1100, 1300, 1500, 1700, 1900, 2100, 2300, 2500, 2700],
-  }), [currentYear]);
+  }), [currentYear, usersMonthlyData]);
 
 
   const monthLabels = useMemo(() => [
@@ -163,63 +234,62 @@ const AdminDashboard = () => {
   const computeBestsellerData = useCallback(async (month, year) => {
     const yr = Number(year);
     const mn = Number(month);
-    // 1) Lấy tên sản phẩm từ DB
-    let products = [];
-    try {
-      const resp = await ProductService.getAllProducts();
-      products = Array.isArray(resp) ? resp : [];
-    } catch (err) {
-      console.warn(err);
-      products = [];
+
+    // 1) Lấy dữ liệu bán chạy từ API
+    const bestsellerRes = await dashboardService.getBestsellersByMonthYear(mn, yr);
+    
+    if (bestsellerRes.success && bestsellerRes.data.length > 0) {
+      const data = bestsellerRes.data;
+      const labels = data.map(item => item.name || "(Không tên)");
+      const quantities = data.map(item => item.totalQuantity || 0);
+
+      // Tạo màu sắc cho mỗi sản phẩm
+      const baseBg = [
+        "rgba(255, 99, 132, 0.8)",
+        "rgba(54, 162, 235, 0.8)",
+        "rgba(255, 205, 86, 0.8)",
+        "rgba(75, 192, 192, 0.8)",
+        "rgba(153, 102, 255, 0.8)",
+        "rgba(255, 159, 64, 0.8)",
+        "rgba(199, 199, 199, 0.8)",
+        "rgba(83, 102, 255, 0.8)",
+      ];
+      const baseBorder = [
+        "rgba(255, 99, 132, 1)",
+        "rgba(54, 162, 235, 1)",
+        "rgba(255, 205, 86, 1)",
+        "rgba(75, 192, 192, 1)",
+        "rgba(153, 102, 255, 1)",
+        "rgba(255, 159, 64, 1)",
+        "rgba(199, 199, 199, 1)",
+        "rgba(83, 102, 255, 1)",
+      ];
+      const bg = Array.from({ length: quantities.length }, (_, i) => baseBg[i % baseBg.length]);
+      const border = Array.from({ length: quantities.length }, (_, i) => baseBorder[i % baseBorder.length]);
+
+      return {
+        labels,
+        datasets: [
+          {
+            label: "Số Lượng Bán Ra",
+            data: quantities,
+            backgroundColor: bg,
+            borderColor: border,
+            borderWidth: 1,
+          },
+        ],
+      };
     }
 
-    // Lấy tối đa 8 sản phẩm đầu để hiển thị
-    const labels = products.slice(0, 8).map(p => p?.name || "(Không tên)");
-
-    // 2) Sinh số liệu ảo nhưng ổn định theo (year, month, index)
-    const seeded = (seed) => {
-      let h = 0;
-      const s = String(seed);
-      for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0;
-      return h;
-    };
-    const quantities = labels.map((_, idx) => {
-      const base = (seeded(`${yr}-${mn}-${idx}`) % 40) + 5; // 5..44
-      return base;
-    });
-
-    // build a color palette sized to results
-    const baseBg = [
-      "rgba(255, 99, 132, 0.8)",
-      "rgba(54, 162, 235, 0.8)",
-      "rgba(255, 205, 86, 0.8)",
-      "rgba(75, 192, 192, 0.8)",
-      "rgba(153, 102, 255, 0.8)",
-      "rgba(255, 159, 64, 0.8)",
-      "rgba(199, 199, 199, 0.8)",
-      "rgba(83, 102, 255, 0.8)",
-    ];
-    const baseBorder = [
-      "rgba(255, 99, 132, 1)",
-      "rgba(54, 162, 235, 1)",
-      "rgba(255, 205, 86, 1)",
-      "rgba(75, 192, 192, 1)",
-      "rgba(153, 102, 255, 1)",
-      "rgba(255, 159, 64, 1)",
-      "rgba(199, 199, 199, 1)",
-      "rgba(83, 102, 255, 1)",
-    ];
-    const bg = Array.from({ length: quantities.length }, (_, i) => baseBg[i % baseBg.length]);
-    const border = Array.from({ length: quantities.length }, (_, i) => baseBorder[i % baseBorder.length]);
-
+    // Nếu không có dữ liệu, trả về dữ liệu trống
     return {
-      labels,
+      labels: ["Không có dữ liệu"],
       datasets: [
         {
           label: "Số Lượng Bán Ra",
-          data: quantities,
-          backgroundColor: bg,
-          borderColor: border,
+          data: [0],
+          backgroundColor: ["rgba(200, 200, 200, 0.8)"],
+          borderColor: ["rgba(150, 150, 150, 1)"],
           borderWidth: 1,
         },
       ],
@@ -536,7 +606,13 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <h4>Doanh Thu</h4>
-              <p className="stat-value">40,000,000 VNĐ</p>
+              <p className="stat-value">
+                {new Intl.NumberFormat("vi-VN", {
+                  notation: "compact",
+                  maximumFractionDigits: 1,
+                }).format(statsData.monthRevenue)}{" "}
+                VNĐ
+              </p>
               <span className="stat-label">Tháng hiện tại</span>
             </div>
           </div>
@@ -547,7 +623,7 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <h4>Sản Phẩm Bán Ra</h4>
-              <p className="stat-value">1,400</p>
+              <p className="stat-value">{statsData.monthProducts}</p>
               <span className="stat-label">Tháng hiện tại</span>
             </div>
           </div>
@@ -558,7 +634,7 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <h4>Số Người Dùng</h4>
-              <p className="stat-value">3,800</p>
+              <p className="stat-value">{statsData.totalUsers}</p>
               <span className="stat-label">Tổng người dùng</span>
             </div>
           </div>
@@ -569,8 +645,19 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <h4>Sản Phẩm Bán Chạy</h4>
-              <p className="stat-value">Top 7</p>
+              <p className="stat-value">Top 8</p>
               <span className="stat-label">Sản phẩm nổi bật</span>
+            </div>
+          </div>
+
+          <div className="stat-card" onClick={() => setActiveTab("orders")}>
+            <div className="stat-icon bestsellers-icon">
+              <i className="fas fa-receipt"></i>
+            </div>
+            <div className="stat-info">
+              <h4>Đơn Hàng</h4>
+              <p className="stat-value">{allOrders.length}</p>
+              <span className="stat-label">Tất cả đơn hàng</span>
             </div>
           </div>
         </div>
@@ -611,6 +698,15 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab("bestsellers")}
             >
               <i className="fas fa-chart-pie"></i> Sản Phẩm Bán Chạy
+            </button>
+          </li>
+          <li className="nav-item" role="presentation">
+            <button
+              className={`nav-link ${activeTab === "orders" ? "active" : ""}`}
+              type="button"
+              onClick={() => setActiveTab("orders")}
+            >
+              <i className="fas fa-receipt"></i> Danh Sách Đơn Hàng
             </button>
           </li>
         </ul>
@@ -911,6 +1007,139 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Danh Sách Đơn Hàng */}
+          {activeTab === "orders" && (
+            <div className="tab-pane fade show active fade-in">
+              <h3 className="mt-3">
+                <i className="fas fa-receipt"></i> Danh Sách Tất Cả Đơn Hàng
+              </h3>
+              <div className="table-responsive mt-4">
+                <table className="table table-hover table-striped">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>#</th>
+                      <th>Mã Đơn</th>
+                      <th>Khách Hàng</th>
+                      <th>Số Điện Thoại</th>
+                      <th>Số Lượng</th>
+                      <th>Tổng Tiền</th>
+                      <th>Trạng Thái</th>
+                      <th>Ngày Đặt</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" className="text-center py-4">
+                          <em>Chưa có đơn hàng nào</em>
+                        </td>
+                      </tr>
+                    ) : (
+                      allOrders
+                        .slice((ordersPage - 1) * ordersPerPage, ordersPage * ordersPerPage)
+                        .map((order, idx) => {
+                          const totalItems = order.products?.reduce((sum, p) => sum + (p.quantity || 0), 0) || 0;
+                          const orderDate = new Date(order.createdAt).toLocaleDateString("vi-VN");
+                          const statusColors = {
+                            PENDING: "warning",
+                            SHIPPING: "info",
+                            DELIVERED: "success",
+                            CANCELLED: "danger",
+                          };
+                          const statusLabel = {
+                            PENDING: "Chờ xử lý",
+                            SHIPPING: "Đang giao",
+                            DELIVERED: "Đã giao",
+                            CANCELLED: "Đã hủy",
+                          };
+
+                          return (
+                            <tr key={order._id}>
+                              <td>{(ordersPage - 1) * ordersPerPage + idx + 1}</td>
+                              <td>
+                                <strong>{order._id.substring(0, 8).toUpperCase()}</strong>
+                              </td>
+                              <td>{order.user?.name || "Khách hàng"}</td>
+                              <td>{order.shipping?.address?.phone || "-"}</td>
+                              <td>{totalItems}</td>
+                              <td>{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(order.amounts?.total || 0)}</td>
+                              <td>
+                                <span className={`badge bg-${statusColors[order.status] || "secondary"}`}>
+                                  {statusLabel[order.status] || order.status}
+                                </span>
+                              </td>
+                              <td>{orderDate}</td>
+                            </tr>
+                          );
+                        })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Phân Trang */}
+              {allOrders.length > 0 && (
+                <nav aria-label="Page navigation" className="mt-4">
+                  <ul className="pagination justify-content-center">
+                    <li className={`page-item ${ordersPage === 1 ? "disabled" : ""}`}>
+                      <button
+                        className="page-link"
+                        onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
+                        disabled={ordersPage === 1}
+                      >
+                        Trước
+                      </button>
+                    </li>
+
+                    {Array.from(
+                      { length: Math.ceil(allOrders.length / ordersPerPage) },
+                      (_, i) => i + 1
+                    ).map((page) => (
+                      <li key={page} className={`page-item ${ordersPage === page ? "active" : ""}`}>
+                        <button
+                          className="page-link"
+                          onClick={() => setOrdersPage(page)}
+                          style={{
+                            backgroundColor: ordersPage === page ? "rgba(102, 126, 234, 1)" : "transparent",
+                            color: ordersPage === page ? "white" : "rgba(102, 126, 234, 1)",
+                          }}
+                        >
+                          {page}
+                        </button>
+                      </li>
+                    ))}
+
+                    <li
+                      className={`page-item ${
+                        ordersPage === Math.ceil(allOrders.length / ordersPerPage)
+                          ? "disabled"
+                          : ""
+                      }`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() =>
+                          setOrdersPage(
+                            Math.min(
+                              Math.ceil(allOrders.length / ordersPerPage),
+                              ordersPage + 1
+                            )
+                          )
+                        }
+                        disabled={
+                          ordersPage ===
+                          Math.ceil(allOrders.length / ordersPerPage)
+                        }
+                      >
+                        Sau
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
               )}
             </div>
           )}
