@@ -60,10 +60,12 @@ const AdminDashboard = () => {
     monthProducts: 0,
     totalUsers: 0,
   });
+  const [topbarLoading, setTopbarLoading] = useState(true);
 
   // ===== FETCH DATA TỪ API =====
   useEffect(() => {
     const fetchDashboardData = async () => {
+      try {
       // Lấy doanh thu theo tháng
       const revenueRes = await dashboardService.getRevenueByMonth(currentYear);
       if (revenueRes.success) {
@@ -95,24 +97,12 @@ const AdminDashboard = () => {
         setUsersMonthlyData(usersRes.data);
       }
 
-      // Lấy stats cho tháng hiện tại
-      const [monthRevRes, monthProdsRes, totalUsersRes] = await Promise.all([
-        dashboardService.getCurrentMonthRevenue(),
-        dashboardService.getCurrentMonthProductsSold(),
-        dashboardService.getTotalUsers(),
-      ]);
-
-      setStatsData({
-        monthRevenue: monthRevRes.success ? monthRevRes.revenue : 0,
-        monthProducts: monthProdsRes.success ? monthProdsRes.quantity : 0,
-        totalUsers: totalUsersRes.success ? totalUsersRes.count : 0,
-      });
-
-      // Lấy tất cả đơn hàng
-      const ordersRes = await dashboardService.getAllOrders();
-      if (ordersRes.success) {
-        setAllOrders(ordersRes.data);
-      }
+      // We removed topbar-specific fetches from this function and
+      // replaced them with a dedicated topbar preload useEffect to
+      // make sure stat cards are loaded quickly when entering admin.
+    } catch (error) {
+      console.error("❌ Lỗi khi fetch dashboard data:", error);
+    }
     };
 
     fetchDashboardData();
@@ -229,6 +219,50 @@ const AdminDashboard = () => {
     if (typeof roleLike === "boolean") return roleLike === true;
     return false;
   }, [currentUser]);
+
+  // Prefetch data for the topbar (stats + orders count) separately so it appears
+  // immediately when the admin page loads. This keeps the topbar responsive
+  // regardless of other chart fetches.
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+
+    const preloadTopbar = async () => {
+      setTopbarLoading(true);
+      try {
+        const settled = await Promise.allSettled([
+          dashboardService.getCurrentMonthRevenue(),
+          dashboardService.getCurrentMonthProductsSold(),
+          dashboardService.getTotalUsers(),
+          dashboardService.getAllOrders(),
+        ]);
+
+        const monthRevRes = settled[0].status === "fulfilled" ? settled[0].value : { success: false, revenue: 0 };
+        const monthProdsRes = settled[1].status === "fulfilled" ? settled[1].value : { success: false, quantity: 0 };
+        const totalUsersRes = settled[2].status === "fulfilled" ? settled[2].value : { success: false, count: 0 };
+        const allOrdersRes = settled[3].status === "fulfilled" ? settled[3].value : { success: false, data: [] };
+
+        if (!cancelled) {
+          setStatsData({
+            monthRevenue: monthRevRes.success ? monthRevRes.revenue : 0,
+            monthProducts: monthProdsRes.success ? monthProdsRes.quantity : 0,
+            totalUsers: totalUsersRes.success ? totalUsersRes.count : 0,
+          });
+          if (allOrdersRes.success) setAllOrders(allOrdersRes.data);
+        }
+      } catch (err) {
+        console.error("❌ Lỗi khi preload topbar:", err);
+      } finally {
+        if (!cancelled) setTopbarLoading(false);
+      }
+    };
+
+    preloadTopbar();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, currentYear]);
 
   // ===== Helpers for Bestseller dynamic data =====
   const computeBestsellerData = useCallback(async (month, year) => {
@@ -604,17 +638,19 @@ const AdminDashboard = () => {
             <div className="stat-icon revenue-icon">
               <i className="fas fa-dollar-sign"></i>
             </div>
-            <div className="stat-info">
-              <h4>Doanh Thu</h4>
-              <p className="stat-value">
-                {new Intl.NumberFormat("vi-VN", {
-                  notation: "compact",
-                  maximumFractionDigits: 1,
-                }).format(statsData.monthRevenue)}{" "}
-                VNĐ
-              </p>
-              <span className="stat-label">Tháng hiện tại</span>
-            </div>
+              <div className="stat-info">
+                <h4>Doanh Thu</h4>
+                <p className="stat-value">
+                  {topbarLoading ? (
+                    <span className="text-muted">...</span>
+                  ) : (
+                    <>
+                      {new Intl.NumberFormat("vi-VN", { notation: "compact", maximumFractionDigits: 1 }).format(statsData.monthRevenue)} VNĐ
+                    </>
+                  )}
+                </p>
+                <span className="stat-label">Tháng hiện tại</span>
+              </div>
           </div>
 
           <div className="stat-card" onClick={() => setActiveTab("products")}>
@@ -623,7 +659,7 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <h4>Sản Phẩm Bán Ra</h4>
-              <p className="stat-value">{statsData.monthProducts}</p>
+              <p className="stat-value">{topbarLoading ? <span className="text-muted">...</span> : statsData.monthProducts}</p>
               <span className="stat-label">Tháng hiện tại</span>
             </div>
           </div>
@@ -634,7 +670,7 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <h4>Số Người Dùng</h4>
-              <p className="stat-value">{statsData.totalUsers}</p>
+              <p className="stat-value">{topbarLoading ? <span className="text-muted">...</span> : statsData.totalUsers}</p>
               <span className="stat-label">Tổng người dùng</span>
             </div>
           </div>
@@ -656,7 +692,7 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <h4>Đơn Hàng</h4>
-              <p className="stat-value">{allOrders.length}</p>
+              <p className="stat-value">{topbarLoading ? <span className="text-muted">...</span> : allOrders.length}</p>
               <span className="stat-label">Tất cả đơn hàng</span>
             </div>
           </div>
@@ -1027,14 +1063,13 @@ const AdminDashboard = () => {
                       <th>Số Điện Thoại</th>
                       <th>Số Lượng</th>
                       <th>Tổng Tiền</th>
-                      <th>Trạng Thái</th>
                       <th>Ngày Đặt</th>
                     </tr>
                   </thead>
                   <tbody>
                     {allOrders.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="text-center py-4">
+                        <td colSpan="7" className="text-center py-4">
                           <em>Chưa có đơn hàng nào</em>
                         </td>
                       </tr>
@@ -1044,18 +1079,7 @@ const AdminDashboard = () => {
                         .map((order, idx) => {
                           const totalItems = order.products?.reduce((sum, p) => sum + (p.quantity || 0), 0) || 0;
                           const orderDate = new Date(order.createdAt).toLocaleDateString("vi-VN");
-                          const statusColors = {
-                            PENDING: "warning",
-                            SHIPPING: "info",
-                            DELIVERED: "success",
-                            CANCELLED: "danger",
-                          };
-                          const statusLabel = {
-                            PENDING: "Chờ xử lý",
-                            SHIPPING: "Đang giao",
-                            DELIVERED: "Đã giao",
-                            CANCELLED: "Đã hủy",
-                          };
+                          // Removed status column — no status badge required here
 
                           return (
                             <tr key={order._id}>
@@ -1067,11 +1091,7 @@ const AdminDashboard = () => {
                               <td>{order.shipping?.address?.phone || "-"}</td>
                               <td>{totalItems}</td>
                               <td>{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(order.amounts?.total || 0)}</td>
-                              <td>
-                                <span className={`badge bg-${statusColors[order.status] || "secondary"}`}>
-                                  {statusLabel[order.status] || order.status}
-                                </span>
-                              </td>
+                              {/* status column removed */}
                               <td>{orderDate}</td>
                             </tr>
                           );

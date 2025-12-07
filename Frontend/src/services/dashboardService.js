@@ -241,6 +241,24 @@ const DashboardService = {
     }
   },
 
+  // Lấy tổng số người dùng
+  getTotalUsers: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/users/getAllUsers`);
+      const allUsers = response.data.data || [];
+      return {
+        success: true,
+        count: allUsers.length,
+      };
+    } catch (error) {
+      console.error("❌ Lỗi lấy tổng số người dùng:", error);
+      return {
+        success: false,
+        count: 0,
+      };
+    }
+  },
+
   // Lấy sản phẩm bán chạy theo tháng/năm
   getBestsellersByMonthYear: async (month, year) => {
     try {
