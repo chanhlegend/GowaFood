@@ -7,6 +7,17 @@ export default function ChatFloatingButton() {
   const menuRef = useRef(null);
   const navigate = useNavigate();
 
+  // Check admin role from localStorage
+  let isAdmin = false;
+  try {
+    const user = JSON.parse(localStorage.getItem("user_gowa"));
+    const roleLike = user?.role ?? user?.roles ?? user?.isAdmin;
+    if (typeof roleLike === "string") isAdmin = roleLike.toLowerCase() === "admin";
+    else if (typeof roleLike === "boolean") isAdmin = roleLike;
+  } catch (e) {
+    // ignore error
+  }
+
   // Đóng menu khi click ra ngoài
   useEffect(() => {
     if (!open) return;
@@ -18,6 +29,8 @@ export default function ChatFloatingButton() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
+
+  if (isAdmin) return null;
 
   return (
     <div className="fixed z-[9999] right-4 bottom-24 sm:right-8 sm:bottom-22 flex flex-col items-end gap-2">
