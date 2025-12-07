@@ -1,5 +1,6 @@
 // src/pages/HomePage.jsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { ProductService } from "../services/productService";
 
@@ -166,6 +167,7 @@ function HeroCarousel() {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -177,7 +179,19 @@ export default function HomePage() {
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
-  const userId = JSON.parse(localStorage.getItem("user_gowa"))?._id;
+  const userObj = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("user_gowa")); } catch { return null; }
+  }, []);
+  const userId = userObj?._id;
+
+  // Redirect admin to dashboard if on homepage
+  useEffect(() => {
+    const roleLike = userObj?.role ?? userObj?.roles ?? userObj?.isAdmin;
+    let isAdmin = false;
+    if (typeof roleLike === "string") isAdmin = roleLike.toLowerCase() === "admin";
+    else if (typeof roleLike === "boolean") isAdmin = roleLike;
+    if (isAdmin) navigate("/admin-dashboard");
+  }, [userObj, navigate]);
   useEffect(() => {
     (async () => {
       try {
