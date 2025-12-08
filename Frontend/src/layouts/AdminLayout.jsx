@@ -7,14 +7,14 @@ import {
     LogOut,
 } from "lucide-react";
 // Simple sidebar placeholder (could be expanded later)
-function AdminSidebar() {
+function AdminSidebar({ isOpen }) {
     const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [cartItemCount, setCartItemCount] = useState(0);
 
 
     return (
-        <aside className="w-64   bg-indigo-50 text-green-800 p-4 space-y-4 hidden lg:flex flex-col">
+        <aside className={`fixed lg:relative lg:w-64 w-full h-screen lg:h-auto bg-indigo-50 text-green-800 p-4 space-y-4 flex flex-col z-40 transition-transform duration-300 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
             <h2 className="text-lg font-bold">Quản trị</h2>
             <nav className="flex flex-col gap-2 text-sm">
                 <a href="/admin-dashboard" className="hover:text-green-300 transition-colors">Phân tích</a>
@@ -30,8 +30,6 @@ function AdminSidebar() {
                         localStorage.removeItem("token_gowa");
                         
                         window.dispatchEvent(new Event("authChange"));
-                        setIsLoggedIn(false);
-                        setCartItemCount(0);
                         navigate("/");
                     }}
                 >
@@ -54,6 +52,7 @@ export default function AdminLayout({ children }) {
         if (typeof roleLike === 'boolean') return roleLike === true;
         return false;
     }, [currentUser]);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     if (!isAdmin) {
         return (
@@ -75,10 +74,29 @@ export default function AdminLayout({ children }) {
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50">
+            {/* Mobile overlay */}
+            {sidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
             
             <div className="flex flex-1 w-full">
-                <AdminSidebar />
-                <main className="flex-1 px-4 py-6 lg:py-8 lg:px-8">
+                <AdminSidebar isOpen={sidebarOpen} />
+                <main className="flex-1 px-4 py-6 lg:py-8 lg:px-8 w-full">
+                  {/* Mobile menu button */}
+                  <div className="lg:hidden mb-4">
+                    <button
+                      onClick={() => setSidebarOpen(!sidebarOpen)}
+                      className="p-2 rounded-lg bg-indigo-50 text-green-800 hover:bg-indigo-100 transition-colors"
+                      aria-label="Toggle menu"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    </button>
+                  </div>
                     <div className="bg-white rounded-xl shadow-sm p-4 lg:p-6 border border-gray-200">
                         {children}
                     </div>
