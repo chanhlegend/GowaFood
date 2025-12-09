@@ -13,9 +13,6 @@ const OrderController = {
     const session = await mongoose.startSession();
     try {
       const orderData = req.body;
-      console.log(orderData);
-      
-
       let savedOrder = null;
 
       await session.withTransaction(async () => {
@@ -52,29 +49,52 @@ const OrderController = {
 
         savedOrder = await newOrder.save({ session });
 
-        
-      // trừ số lượng của hàng hóan trong kho
+        // trừ số lượng của hàng hóan trong kho
+        function parseWeight(weightStr) {
+          if (!weightStr) return 0;
 
-      const products = orderData.products.map((item) => {
-        return {
-          _id: item.product,
-          quantity: item.quantity || 1,
-        }
-      });
+          weightStr = weightStr.toUpperCase().trim();
 
-      // Lọc và lấy product theo ID
-      products.forEach(async (item) => {
-        const product = await Product.findById(item._id);
-        if (product) {
-          if (product.stock < item.quantity) {
-            return res.status(400).json({ message: `Sản phẩm ${product.name} không đủ số lượng trong kho.` });
+          // Nếu là KG (ví dụ: "1KG")
+          if (weightStr.endsWith("KG")) {
+            const num = parseFloat(weightStr.replace("KG", ""));
+            return Number.isFinite(num) ? num : 0;
           }
-          product.stock -= item.quantity;
-          await product.save();
-        } else {
-          return res.status(404).json({ message: `Sản phẩm với ID ${item._id} không tồn tại.` });
+
+          // Nếu là G (ví dụ: "500G")
+          if (weightStr.endsWith("G")) {
+            const num = parseFloat(weightStr.replace("G", ""));
+            return Number.isFinite(num) ? num / 1000 : 0;
+          }
+
+          return 0; // fallback
         }
-      });
+
+        const products = orderData.products.map((item) => {
+          return {
+            _id: item.product,
+            quantity: item.quantity || 1,
+            weight: parseWeight(item.weight) || 0,
+          };
+        });
+
+        // Lọc và lấy product theo ID
+        products.forEach(async (item) => {
+          const product = await Product.findById(item._id);
+          if (product) {
+            if (product.stock < item.quantity) {
+              return res.status(400).json({
+                message: `Sản phẩm ${product.name} không đủ số lượng trong kho.`,
+              });
+            }
+            product.stock -= item.quantity * item.weight;
+            await product.save();
+          } else {
+            return res
+              .status(404)
+              .json({ message: `Sản phẩm với ID ${item._id} không tồn tại.` });
+          }
+        });
       });
 
       return res
@@ -134,8 +154,6 @@ const OrderController = {
   async cancelOrder(req, res) {
     try {
       const { id } = req.params;
-      console.log("Cancel order ID:", id);
-
       const order = await Order.findById(id);
       if (!order) {
         return res.status(404).json({
@@ -151,6 +169,43 @@ const OrderController = {
 
       order.status = "CANCELLED";
       await order.save();
+
+      // trừ số lượng của hàng hóan trong kho
+      function parseWeight(weightStr) {
+        if (!weightStr) return 0;
+
+        weightStr = weightStr.toUpperCase().trim();
+
+        // Nếu là KG (ví dụ: "1KG")
+        if (weightStr.endsWith("KG")) {
+          const num = parseFloat(weightStr.replace("KG", ""));
+          return Number.isFinite(num) ? num : 0;
+        }
+
+        // Nếu là G (ví dụ: "500G")
+        if (weightStr.endsWith("G")) {
+          const num = parseFloat(weightStr.replace("G", ""));
+          return Number.isFinite(num) ? num / 1000 : 0;
+        }
+
+        return 0; // fallback
+      }
+
+      const products = order.products.map((item) => {
+        return {
+          _id: item.product,
+          quantity: item.quantity || 1,
+          weight: parseWeight(item.weight) || 0,
+        };
+      });
+
+      products.forEach(async (item) => {
+        const product = await Product.findById(item._id);
+        if (product) {
+          product.stock += item.quantity * item.weight;
+          await product.save();
+        }
+      });
 
       res.status(200).json({ message: "Hủy đơn hàng thành công", data: order });
     } catch (err) {
@@ -249,7 +304,9 @@ const OrderController = {
         .sort({ createdAt: -1 })
         .populate("products.product")
         .populate("user");
-      res.status(200).json({ message: "Danh sách tất cả đơn hàng", data: orders });
+      res
+        .status(200)
+        .json({ message: "Danh sách tất cả đơn hàng", data: orders });
     } catch (err) {
       res.status(500).json({
         message: "Lỗi khi lấy danh sách tất cả đơn hàng",
