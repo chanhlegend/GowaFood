@@ -33,6 +33,7 @@ const OrdersPage = React.lazy(() => import("../pages/orderListPage"));
 const OrderDetailPage = React.lazy(() => import("../pages/orderDetailPage"));
 const OrderNewPage = React.lazy(() => import("../pages/orderNewPage"));
 const AboutUsPage = React.lazy(() => import("../pages/aboutUsPage"));
+const GuidelinePage = React.lazy(() => import("../pages/guidelinePage"));
 
 //Admin Dashboard
 const AdminDashboardPage = React.lazy(() => import("../pages/AdminDashboard"));
@@ -56,6 +57,7 @@ const AppRoute = [
   // Site
   { path: ROUTE_PATH.HOME, page: HomePage, layout: MainLayout },
   { path: ROUTE_PATH.ABOUT_US, page: AboutUsPage, layout: MainLayout },
+  { path: ROUTE_PATH.GUIDELINE, page: GuidelinePage, layout: MainLayout },
 
   { path: ROUTE_PATH.CART, page: CartPage, layout: MainLayout },
   { path: ROUTE_PATH.FOOD_BY_CATEGORY, page: FoodByCategoryPage, layout: MainLayout },
