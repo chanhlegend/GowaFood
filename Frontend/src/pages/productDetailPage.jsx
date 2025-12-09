@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ProductService } from "@/services/productService";
 import { CartService } from "@/services/cartService";
+import { ReviewService } from "@/services/reviewService";
 import OrderService from "../services/orderService";
 import Reviews from "@/components/Reviews";
 
@@ -50,6 +51,8 @@ export default function ProductDetailPage() {
   const [viewedProducts, setViewedProducts] = useState([]);
 
   const [checkOrderHistory, setCheckOrderHistory] = useState(false);
+
+  const [reviewStats, setReviewStats] = useState({ average: 0, total: 0 });
 
   const qrDots = useMemo(() => makeSeededGrid(8 * 8), []);
   const user = JSON.parse(localStorage.getItem("user_gowa")) || null;
@@ -105,6 +108,27 @@ export default function ProductDetailPage() {
       }
     }
     if (productId) load();
+    return () => {
+      mounted = false;
+    };
+  }, [productId]);
+
+  // Load thống kê đánh giá để hiển thị giống block Reviews
+  useEffect(() => {
+    if (!productId) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const s = await ReviewService.stats(productId);
+        if (!mounted) return;
+        setReviewStats({
+          average: s?.average || 0,
+          total: s?.total || 0,
+        });
+      } catch (e) {
+        // im lặng nếu lỗi, dùng fallback từ product
+      }
+    })();
     return () => {
       mounted = false;
     };
@@ -214,6 +238,9 @@ export default function ProductDetailPage() {
     : ["/placeholder.svg"];
   const categoryName = product.category?.name || "Rau sạch";
 
+  const ratingValue = reviewStats.average || product.rating || 0;
+  const reviewCount = reviewStats.total || product.reviewCount || 0;
+
   // === Giá theo trọng lượng ===
   const rawPrice = Number.isFinite(product.price) ? product.price : 0;
 
@@ -303,56 +330,40 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Thumbnails: trượt ngang trên mobile, grid trên md+ */}
-          <div className="md:grid md:grid-cols-4 md:gap-3 flex gap-3 overflow-x-auto no-scrollbar">
-            {images.slice(0, 8).map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setSelectedImage(i)}
-                className={`min-w-[88px] md:min-w-0 aspect-square rounded-xl overflow-hidden border transition-colors ${selectedImage === i
-                  ? "border-green-600"
-                  : "border-gray-200 hover:border-green-300"
-                  }`}
-                aria-label={`Ảnh ${i + 1}`}
-              >
-                <img
-                  src={img}
-                  alt={`${product.name} ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
+          
+         
         </div>
 
         {/* Right: info */}
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">{product.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              {/* Render stars dynamically based on the product's rating */}
-              {/* {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-4 w-4 ${i < product.rating ? "fill-yellow-400 text-yellow-400" : "fill-gray-300 text-gray-300"}`}
-                />
-              ))} */}
-              <div className="flex items-center gap-2 mt-1">
-        {/* Render stars dynamically based on the product's rating */}
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 ${i < product.rating ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-300 text-gray-300'}`}
-          />
-        ))}
-        {/* Clickable text to scroll to the Reviews section */}
-        <span
-          className="text-sm text-gray-500 cursor-pointer"
-          onClick={handleScrollToReviews}
-        >
-          ({product.reviewCount} đánh giá)
-        </span>
-      </div>
+            <div className="flex items-center gap-3 mt-1">
+              {/* Giống phần summary trong Reviews: điểm trung bình + 5 sao */}
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-extrabold text-emerald-700">
+                  {Number(ratingValue).toFixed(1)}
+                </span>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < Math.round(ratingValue)
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              {/* Text giống Reviews + scroll xuống phần đánh giá */}
+              <span
+                className="text-sm text-gray-500 cursor-pointer"
+                onClick={handleScrollToReviews}
+              >
+                Dựa trên {reviewCount} đánh giá
+              </span>
             </div>
           </div>
 
