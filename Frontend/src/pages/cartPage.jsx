@@ -291,24 +291,6 @@ export default function CartPage() {
               <div className="px-4 py-3 bg-emerald-50/80 border-b font-semibold text-emerald-900">
                 Thông tin đơn hàng
               </div>
-
-              {/* Free ship progress */}
-              <div className="p-4 space-y-3">
-                <div className="text-sm text-gray-600">
-                  {shipRemain > 0 ? (
-                    <>Mua thêm <b>{formatVND(shipRemain)}</b> để được <b>miễn phí giao hàng</b>!</>
-                  ) : (
-                    <span className="text-emerald-700 font-medium">Bạn đã đủ điều kiện miễn phí giao hàng 🎉</span>
-                  )}
-                </div>
-                <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                  <div
-                    className="h-2 rounded-full bg-emerald-500 transition-all duration-500"
-                    style={{ width: `${shipProgress}%` }}
-                  />
-                </div>
-              </div>
-
               {/* Totals */}
               <div className="px-4 py-3 border-t space-y-1 text-sm">
                 <Row label="Tạm tính" value={formatVND(subtotal)} />
