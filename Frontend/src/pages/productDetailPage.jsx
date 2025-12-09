@@ -427,7 +427,7 @@ export default function ProductDetailPage() {
             </div>
             {stock !== undefined && (
               <span className="text-sm text-gray-500 shrink-0">
-                {outOfStock ? "Hết hàng" : `Còn ${stock} sp`}
+                {outOfStock ? "Hết hàng" : `Còn ${stock} kg`}
               </span>
             )}
           </div>

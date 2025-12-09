@@ -228,7 +228,6 @@ class UserController {
         try {
             const userId = req.params.id;
             const { pointsChange } = req.body; // Số điểm thay đổi (có thể âm hoặc dương)
-            console.log('Updating reward points for user:', userId, 'Points change:', pointsChange);
             // cố gắng chuyển đổi pointsChange sang số nếu nó là chuỗi
             if (pointsChange === undefined) {
                 return res.status(400).json({ message: 'Vui lòng cung cấp pointsChange' });

@@ -51,6 +51,7 @@ export default function ProcessPaymentPage() {
   const [orderCode, setOrderCode] = useState(null);
   const [loadingQR, setLoadingQR] = useState(false);
   const [qrError, setQrError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const isBank = order?.payment?.method === "BANK";
   const isCOD = order?.payment?.method === "COD";
@@ -71,7 +72,8 @@ export default function ProcessPaymentPage() {
   }, [order, items]);
 
   const shippingFee = useMemo(() => {
-    if (typeof order?.amounts?.shippingFee === "number") return order.amounts.shippingFee;
+    if (typeof order?.amounts?.shippingFee === "number")
+      return order.amounts.shippingFee;
     return 0;
   }, [order]);
 
@@ -201,6 +203,7 @@ export default function ProcessPaymentPage() {
 
   const handleConfirmCOD = async () => {
     try {
+      setLoading(true);
       const result = await OrderService.createOrder(orderData);
       if (result.success === true) {
         // Tính điểm thưởng: ví dụ 1 điểm / 1,000đ, trừ đi điểm đã dùng
@@ -215,6 +218,8 @@ export default function ProcessPaymentPage() {
     } catch (err) {
       console.error(err);
       toast.error(err?.message || "Không thể tạo đơn hàng.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -257,7 +262,8 @@ export default function ProcessPaymentPage() {
       try {
         // sinh orderCode ngẫu nhiên
         const newOrderCode =
-          (Date.now() % 10_000_000_000_000) + Math.floor(Math.random() * 10_000);
+          (Date.now() % 10_000_000_000_000) +
+          Math.floor(Math.random() * 10_000);
 
         const paymentData = {
           orderCode: newOrderCode,
@@ -379,40 +385,42 @@ export default function ProcessPaymentPage() {
                 {order?.shipping?.method !== "HOME" && (
                   <div className="mt-2 text-sm text-gray-600 mb-3">
                     <p className="text-gray-500">
-                      Địa chỉ cửa hàng: 80 Trần Văn Trà, Xã Sơn Hà, Quảng Ngãi
+                      Địa chỉ cửa hàng: 4 Núi Thành, phường Tân Bình, Thành Phố
+                      Hồ Chí Minh
                     </p>
                   </div>
                 )}
               </div>
 
-              {order?.shipping?.method === "HOME" && order?.shipping?.address && (
-                <div className="mt-2 text-sm text-gray-600 space-y-2 mb-3">
-                  <p>
-                    <span className="text-gray-500">Người nhận:</span>{" "}
-                    <span className="font-medium">
-                      {order.shipping.address.name}
-                    </span>
-                  </p>
-                  <p>
-                    <span className="text-gray-500">SĐT:</span>{" "}
-                    <span className="font-medium">
-                      {order.shipping.address.phone}
-                    </span>
-                  </p>
-                  <p>
-                    <span className="text-gray-500">Địa chỉ:</span>{" "}
-                    <span className="font-medium">
-                      {order.shipping.address.address}
-                      {order.shipping.address.ward
-                        ? `, ${order.shipping.address.ward}`
-                        : ""}
-                      {order.shipping.address.city
-                        ? `, ${order.shipping.address.city}`
-                        : ""}
-                    </span>
-                  </p>
-                </div>
-              )}
+              {order?.shipping?.method === "HOME" &&
+                order?.shipping?.address && (
+                  <div className="mt-2 text-sm text-gray-600 space-y-2 mb-3">
+                    <p>
+                      <span className="text-gray-500">Người nhận:</span>{" "}
+                      <span className="font-medium">
+                        {order.shipping.address.name}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-gray-500">SĐT:</span>{" "}
+                      <span className="font-medium">
+                        {order.shipping.address.phone}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-gray-500">Địa chỉ:</span>{" "}
+                      <span className="font-medium">
+                        {order.shipping.address.address}
+                        {order.shipping.address.ward
+                          ? `, ${order.shipping.address.ward}`
+                          : ""}
+                        {order.shipping.address.city
+                          ? `, ${order.shipping.address.city}`
+                          : ""}
+                      </span>
+                    </p>
+                  </div>
+                )}
 
               <Divider />
 
@@ -521,7 +529,9 @@ export default function ProcessPaymentPage() {
                     </p>
                     <p>
                       <span className="text-gray-500">Chủ Tài khoản:</span>{" "}
-                      <span className="font-medium">{bankInfo.accountName}</span>
+                      <span className="font-medium">
+                        {bankInfo.accountName}
+                      </span>
                     </p>
                     <p>
                       <span className="text-gray-500">Số Tài khoản:</span>{" "}
@@ -564,7 +574,9 @@ export default function ProcessPaymentPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Tạm tính</span>
-                    <span className="font-medium">{formatVND(rawSubtotal)}</span>
+                    <span className="font-medium">
+                      {formatVND(rawSubtotal)}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -602,7 +614,7 @@ export default function ProcessPaymentPage() {
                     onClick={handleConfirmCOD}
                     className="mt-4 w-full px-4 py-3 rounded-xl bg-custom-green cursor-pointer text-white font-semibold hover:opacity-90 transition"
                   >
-                    Xác nhận đặt hàng (COD)
+                    {loading ? "Đang xử lý..." : "Xác nhận đơn hàng (COD)"}
                   </button>
                 )}
 
