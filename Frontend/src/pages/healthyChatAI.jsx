@@ -80,7 +80,7 @@ const HealthyChatAI = () => {
     try {
       // Lọc bỏ thuộc tính products trước khi gửi đến Groq API
       const messagesForAPI = nextMessages.map(({ role, content }) => ({ role, content }))
-      
+
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         temperature: 0.3,
@@ -89,7 +89,7 @@ const HealthyChatAI = () => {
           {
             role: "system",
             content:
-              "Bạn là trợ lý dinh dưỡng nói tiếng Việt. Bạn gợi ý các chất dinh dưỡng và thực phẩm chứa các dinh dưỡng đó theo bệnh lý mà người dùng đưa ra. Luôn ngắn gọn, có cấu trúc (tiêu đề, chất dinh dưỡng, các loại thực phẩm chứa chất dinh dưỡng đó). Lưu ý, bạn chỉ trả lời câu hỏi liên quan đến dinh dưỡng, nếu có câu hỏi ngoài lề, bạn chỉ có thể trả lời: 'Xin lỗi, tôi chỉ có thể trả lời câu hỏi liên quan đến dinh dưỡng và sức khỏe.' và không trả lời gì thêm",
+              "Bạn là trợ lý dinh dưỡng nói tiếng Việt. Bạn gợi ý các chất dinh dưỡng và thực phẩm chứa các dinh dưỡng đó theo bệnh lý mà người dùng đưa ra. Luôn ngắn gọn, có cấu trúc (tiêu đề, chất dinh dưỡng, các loại thực phẩm chứa chất dinh dưỡng đó). QUY TẮC ĐƠN VỊ ĐO LƯỜNG (BẮT BUỘC): Dùng 'bát' cho cơm/cháo/canh (không dùng 'cốc'); Dùng gram (g) hoặc kg cho thịt/cá/rau/củ (ví dụ: 200g thịt bò, 150g rau muống); Dùng 'thìa canh' hoặc 'thìa cà phê' cho gia vị lỏng; Dùng 'muỗng' cho đường/muối/bột; Dùng 'quả/củ/nhánh/tép' cho nguyên liệu nguyên (2 quả trứng, 1 củ hành, 3 tép tỏi); Dùng 'ml' hoặc 'lít' cho nước/sữa. Lưu ý, bạn chỉ trả lời câu hỏi liên quan đến dinh dưỡng, nếu có câu hỏi ngoài lề, bạn chỉ có thể trả lời: 'Xin lỗi, tôi chỉ có thể trả lời câu hỏi liên quan đến dinh dưỡng và sức khỏe.' và không trả lời gì thêm",
           },
           ...messagesForAPI,
         ],
@@ -97,14 +97,14 @@ const HealthyChatAI = () => {
 
       const answer = completion?.choices?.[0]?.message?.content?.trim() ||
         "Xin lỗi, hiện mình chưa có câu trả lời. Hãy thử hỏi lại nhé."
-      
+
       // Tìm sản phẩm liên quan từ cả câu hỏi và câu trả lời (with memoization)
       const relevantProducts = findRelevantProducts.current ? findRelevantProducts.current(trimmed, answer) : []
-      
+
       setMessages((prev) => [
-        ...prev, 
-        { 
-          role: "assistant", 
+        ...prev,
+        {
+          role: "assistant",
           content: answer,
           products: relevantProducts.length > 0 ? relevantProducts : null
         }
@@ -133,9 +133,8 @@ const HealthyChatAI = () => {
             <div key={idx}>
               <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`${
-                    m.role === "user" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-900"
-                  } max-w-[85%] sm:max-w-[75%] px-3 py-2 sm:px-4 sm:py-3 rounded-2xl whitespace-pre-wrap leading-relaxed`}
+                  className={`${m.role === "user" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-900"
+                    } max-w-[85%] sm:max-w-[75%] px-3 py-2 sm:px-4 sm:py-3 rounded-2xl whitespace-pre-wrap leading-relaxed`}
                 >
                   {m.content}
                 </div>
