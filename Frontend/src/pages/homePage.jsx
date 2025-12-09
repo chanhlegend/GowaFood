@@ -266,6 +266,7 @@ export default function HomePage() {
       .filter((g) => g.items.length > 0);
   }, [rawGroups, query]);
 
+  
   // Các trạng thái hiển thị
   if (loading) {
     return (
@@ -360,7 +361,7 @@ export default function HomePage() {
         </div>
       </section>
       {/* Section: Sản phẩm đã mua */}
-      {!loadingRecent && recentProducts.length > 0 && (
+      {!loadingRecent && recentProducts.length > 0 && query.length === 0 && (
         <section className="mt-7 mb-10">
           <div className="flex items-center justify-between rounded-xl bg-custom-green px-5 py-4">
             <div>
@@ -412,7 +413,7 @@ export default function HomePage() {
       )}
 
       {/* Section: Sản phẩm đề xuất */}
-      {!loadingRecommended && recommendedProducts.length > 0 && (
+      {!loadingRecommended && recommendedProducts.length > 0 && query.length === 0 && (
         <section className="mt-7 mb-10">
           <div className="flex items-center justify-between rounded-xl bg-custom-green px-5 py-4">
             <div>
