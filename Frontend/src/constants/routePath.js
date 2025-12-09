@@ -8,6 +8,7 @@ export const ROUTE_PATH = {
   HOME: '/',
   FOOD_BY_CATEGORY: '/food-by-category/:categoryId',
   ABOUT_US: '/aboutus',
+  GUIDELINE: '/guideline',
 
   // Product
   CREATE_PRODUCT: '/create-product',
