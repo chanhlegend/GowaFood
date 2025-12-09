@@ -24,8 +24,6 @@ class RoutingService {
       const coordinates = `${startLon},${startLat};${endLon},${endLat}`
       const url = `${this.baseUrl}/${coordinates}?overview=false&alternatives=false&steps=false`
       
-      console.log('OSRM API URL:', url)
-      
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), this.timeout)
       
