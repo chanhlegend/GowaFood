@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef  } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Minus,
@@ -33,10 +33,125 @@ function makeSeededGrid(count, seed = 98765) {
   return out;
 }
 
+// Custom hook for scroll animation (Intersection Observer)
+function useScrollAnimation(options = {}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1, ...options }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, []);
+
+  return [ref, isVisible];
+}
+
+// Animated Section Component
+function AnimatedSection({ children, className = "", delay = 0 }) {
+  const [ref, isVisible] = useScrollAnimation();
+
+  return (
+    <div
+      ref={ref}
+      className={`${className} transition-all duration-700 ease-out ${isVisible
+          ? 'opacity-100 translate-y-0'
+          : 'opacity-0 translate-y-8'
+        }`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Floating background shapes
+function FloatingShapes() {
+  return (
+    <>
+      <div className="absolute -right-32 top-20 w-64 h-64 bg-green-100/30 rounded-full blur-3xl animate-float pointer-events-none" />
+      <div className="absolute -left-20 bottom-40 w-48 h-48 bg-lime-100/40 rounded-full blur-2xl animate-float pointer-events-none" style={{ animationDelay: '1.5s' }} />
+    </>
+  );
+}
+
+// Skeleton Loading Card
+function SkeletonCard() {
+  return (
+    <div className="rounded-2xl bg-white border border-green-100 shadow-sm overflow-hidden">
+      <div className="aspect-[4/3] w-full skeleton rounded-t-2xl" />
+      <div className="p-4 space-y-3">
+        <div className="h-4 skeleton rounded-lg w-3/4" />
+        <div className="h-4 skeleton rounded-lg w-1/2" />
+      </div>
+    </div>
+  );
+}
+
+// Related/Viewed Product Card with animations
+function ProductCard({ product, index = 0 }) {
+  const pImg = product.images?.[0]?.url ?? product.images?.[0] ?? "/placeholder.svg";
+  const pPrice = Number.isFinite(product.price) ? product.price : 0;
+  const pOrig = Number.isFinite(product.originalPrice) ? product.originalPrice : 0;
+  const navigate = useNavigate();
+
+  return (
+    <div
+      onClick={() => navigate(`/product/${product._id || product.id}`)}
+      className="product-card-hover rounded-xl border bg-white shadow-sm p-4 cursor-pointer stagger-item group"
+      style={{ animationDelay: `${index * 0.05}s` }}
+    >
+      <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 mb-3">
+        {/* Shimmer overlay */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 shimmer-bg pointer-events-none transition-opacity duration-300 z-10" />
+        <img
+          src={pImg}
+          alt={product.name}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        {product.badge && (
+          <span className="absolute top-3 left-3 inline-flex items-center rounded-full bg-emerald-700 text-white text-xs font-semibold px-3 py-1 animate-bounce-in">
+            {product.badge}
+          </span>
+        )}
+      </div>
+      <h3 className="font-medium text-sm mb-2 line-clamp-2 group-hover:text-green-700 transition-colors duration-300">
+        {product.name}
+      </h3>
+      <div className="flex items-center gap-2">
+        <span className="font-extrabold text-emerald-700 group-hover:scale-105 transition-transform duration-300 origin-left">
+          {pPrice.toLocaleString("vi-VN")}₫
+        </span>
+        {pOrig > pPrice && (
+          <span className="text-xs text-gray-400 line-through">
+            {pOrig.toLocaleString("vi-VN")}₫
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ProductDetailPage() {
   const navigate = useNavigate();
   const { id: productId } = useParams();
-  
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -46,6 +161,7 @@ export default function ProductDetailPage() {
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
   const [product, setProduct] = useState(null);
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [viewedProducts, setViewedProducts] = useState([]);
@@ -56,6 +172,12 @@ export default function ProductDetailPage() {
 
   const qrDots = useMemo(() => makeSeededGrid(8 * 8), []);
   const user = JSON.parse(localStorage.getItem("user_gowa")) || null;
+
+  // Trigger page animation after mount
+  useEffect(() => {
+    const timer = setTimeout(() => setPageLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Load product + related + viewed
   useEffect(() => {
@@ -92,14 +214,14 @@ export default function ProductDetailPage() {
             const rel = await ProductService.getRelated(productId);
             if (mounted) setRelatedProducts(Array.isArray(rel) ? rel : []);
           }
-        } catch (_){}
+        } catch (_) { }
 
         try {
           if (typeof ProductService.getRecentlyViewed === "function") {
             const viewed = await ProductService.getRecentlyViewed();
             if (mounted) setViewedProducts(Array.isArray(viewed) ? viewed : []);
           }
-        } catch (_){}
+        } catch (_) { }
       } catch (e) {
         if (!mounted) return;
         setError(e?.message || "Không thể tải sản phẩm");
@@ -153,9 +275,9 @@ export default function ProductDetailPage() {
     }
   };
 
-   const reviewsRef = useRef(null);
+  const reviewsRef = useRef(null);
 
-   const handleScrollToReviews = () => {
+  const handleScrollToReviews = () => {
     if (reviewsRef.current) {
       reviewsRef.current.scrollIntoView({
         behavior: 'smooth',
@@ -165,12 +287,18 @@ export default function ProductDetailPage() {
   };
   if (!productId) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="text-center">
-          <p className="text-sm text-gray-500">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-green-50 to-white">
+        <div className="text-center animate-fade-in-up">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center animate-bounce-in">
+            <span className="text-3xl">🔍</span>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
             Không có ID sản phẩm trong URL.
           </p>
-          <Button className="mt-3" onClick={() => navigate("/")}>
+          <Button
+            className="bg-green-600 hover:bg-green-700 hover:scale-105 transition-all duration-300"
+            onClick={() => navigate("/")}
+          >
             Về trang chủ
           </Button>
         </div>
@@ -180,8 +308,8 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <header className="sticky top-0 bg-white border-b">
+      <div className="min-h-screen bg-gradient-to-b from-green-50/50 to-white">
+        <header className="sticky top-0 bg-white/90 backdrop-blur border-b">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <Button
               variant="ghost"
@@ -198,13 +326,15 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </header>
-        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 gap-8 animate-pulse">
-          <div className="h-[300px] sm:h-[380px] md:h-[520px] bg-gray-100 rounded-xl" />
+        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="h-[300px] sm:h-[380px] md:h-[520px] skeleton rounded-xl" />
           <div className="space-y-4">
-            <div className="h-8 bg-gray-100 rounded w-2/3" />
-            <div className="h-4 bg-gray-100 rounded w-1/3" />
-            <div className="h-20 bg-gray-100 rounded w-full" />
-            <div className="h-10 bg-gray-100 rounded w-full" />
+            <div className="h-8 skeleton rounded w-2/3" />
+            <div className="h-4 skeleton rounded w-1/3" />
+            <div className="h-6 skeleton rounded w-1/4" />
+            <div className="h-20 skeleton rounded w-full" />
+            <div className="h-12 skeleton rounded w-full" />
+            <div className="h-12 skeleton rounded w-full" />
           </div>
         </div>
       </div>
@@ -213,20 +343,30 @@ export default function ProductDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen p-6 max-w-6xl mx-auto">
+      <div className="min-h-screen p-6 max-w-6xl mx-auto bg-gradient-to-b from-green-50/50 to-white">
         <div className="mb-4">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2"
+            className="gap-2 hover:scale-105 transition-transform duration-300"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-4 w-4" /> Quay lại
           </Button>
         </div>
-        <div className="p-4 rounded-lg border border-red-200 bg-red-50 text-red-700">
-          {error}
-        </div>
+        <AnimatedSection>
+          <div className="p-6 rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 text-red-700 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 animate-bounce-in">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <div>
+                <p className="font-semibold text-lg">Đã xảy ra lỗi</p>
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            </div>
+          </div>
+        </AnimatedSection>
       </div>
     );
   }
@@ -251,7 +391,7 @@ export default function ProductDetailPage() {
   let originalPrice = 0;
   let discountPercent = 0;
 
-  
+
 
   const stock = Number.isFinite(product.stock) ? product.stock : undefined;
   const outOfStock = stock !== undefined && stock <= 0;
@@ -269,97 +409,121 @@ export default function ProductDetailPage() {
   plantingDate.setDate(today.getDate() - harvestDays); // Ngày hôm nay trừ số ngày thu hoạch
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b">
+    <div className="min-h-screen bg-gradient-to-b from-green-50/30 to-white relative overflow-hidden">
+      {/* Floating background shapes */}
+      <FloatingShapes />
+
+      {/* Header with animation */}
+      <header className={`sticky top-0 z-50 bg-white/90 backdrop-blur border-b transition-all duration-500 ${pageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2"
+            className="gap-2 hover:scale-105 hover:text-green-700 transition-all duration-300"
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" /> Trang chủ
           </Button>
           <div className="hidden sm:flex gap-2 text-sm text-gray-500">
-            <span>{categoryName}</span>
-            <span>/</span>
-            <span className="font-medium">{product.name}</span>
+            <span className="hover:text-green-600 transition-colors duration-300 cursor-pointer">{categoryName}</span>
+            <span className="text-green-400">/</span>
+            <span className="font-medium text-green-700">{product.name}</span>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-        {/* Left: images */}
-        <div className="space-y-4">
-          <div className="relative aspect-square sm:aspect-[4/3] md:aspect-square border rounded-xl bg-gray-50 overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 relative z-10">
+        {/* Left: images with animation */}
+        <div className={`space-y-4 transition-all duration-700 ${pageLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+          <div className="relative aspect-square sm:aspect-[4/3] md:aspect-square border rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden shadow-lg group">
             <img
               src={images[selectedImage]}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
-            {/* QR & Like */}
+
+            {/* Shimmer overlay on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 shimmer-bg pointer-events-none transition-opacity duration-500" />
+
+            {/* QR & Like with animation */}
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white/85 rounded-lg"
+              className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hover:scale-110 hover:bg-white transition-all duration-300"
               onClick={() => setShowQRCode(true)}
               aria-label="Xem mã QR"
             >
-              <QrCode className="h-5 w-5" />
+              <QrCode className="h-5 w-5 text-green-700" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/85 rounded-lg"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hover:scale-110 hover:bg-white transition-all duration-300"
               onClick={() => setIsFavorite((v) => !v)}
               aria-label="Yêu thích"
             >
               <Heart
-                className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""
+                className={`h-5 w-5 transition-all duration-300 ${isFavorite ? "fill-red-500 text-red-500 scale-110" : "text-gray-600 hover:text-red-400"
                   }`}
               />
             </Button>
 
             {/* Badge hết hàng */}
             {outOfStock && (
-              <span className="absolute bottom-3 left-3 inline-flex items-center rounded-full bg-gray-900/85 text-white text-xs font-semibold px-3 py-1">
+              <span className="absolute bottom-3 left-3 inline-flex items-center rounded-full bg-gray-900/90 text-white text-xs font-semibold px-4 py-1.5 animate-bounce-in">
                 Hết hàng
               </span>
             )}
           </div>
 
-          
-         
+          {/* Image thumbnails with animation */}
+          {images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedImage(idx)}
+                  className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${selectedImage === idx
+                      ? 'border-green-500 shadow-lg shadow-green-200'
+                      : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Right: info */}
-        <div className="space-y-6">
+        {/* Right: info with animation */}
+        <div className={`space-y-6 transition-all duration-700 delay-100 ${pageLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{product.name}</h1>
-            <div className="flex items-center gap-3 mt-1">
-              {/* Giống phần summary trong Reviews: điểm trung bình + 5 sao */}
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-extrabold text-emerald-700">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              {product.name}
+            </h1>
+            <div className="flex items-center gap-3 mt-2">
+              {/* Rating với animation */}
+              <div className="flex items-center gap-2 group">
+                <span className="text-xl font-extrabold text-emerald-700 group-hover:scale-110 transition-transform duration-300">
                   {Number(ratingValue).toFixed(1)}
                 </span>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-4 w-4 ${
-                        i < Math.round(ratingValue)
+                      className={`h-4 w-4 transition-all duration-300 ${i < Math.round(ratingValue)
                           ? "text-yellow-400 fill-yellow-400"
                           : "text-gray-300"
-                      }`}
+                        }`}
+                      style={{ transitionDelay: `${i * 50}ms` }}
                     />
                   ))}
                 </div>
               </div>
-              {/* Text giống Reviews + scroll xuống phần đánh giá */}
+              {/* Text scroll to reviews */}
               <span
-                className="text-sm text-gray-500 cursor-pointer"
+                className="text-sm text-gray-500 cursor-pointer hover:text-green-600 hover:underline transition-all duration-300"
                 onClick={handleScrollToReviews}
               >
                 Dựa trên {reviewCount} đánh giá
@@ -367,8 +531,9 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center flex-wrap gap-3">
-            <span className="text-2xl sm:text-3xl font-extrabold text-green-700 tracking-tight">
+          {/* Price với animation */}
+          <div className="flex items-center flex-wrap gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
+            <span className="text-2xl sm:text-3xl font-extrabold text-green-700 tracking-tight animate-pulse-glow">
               {price.toLocaleString("vi-VN")}₫
             </span>
             {originalPrice > price && (
@@ -377,22 +542,26 @@ export default function ProductDetailPage() {
               </span>
             )}
             {discountPercent > 0 && (
-              <span className="inline-flex h-7 items-center rounded-full bg-red-500 px-3 text-xs font-semibold text-white leading-none">
+              <span className="inline-flex h-7 items-center rounded-full bg-red-500 px-3 text-xs font-semibold text-white leading-none animate-bounce-in">
                 -{discountPercent}%
               </span>
             )}
           </div>
 
+          {/* Weight selector với animation */}
           <div>
-            <h3 className="font-semibold mb-2">Cân nặng:</h3>
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <Package className="w-4 h-4 text-green-600" />
+              Cân nặng:
+            </h3>
             <div className="flex flex-wrap gap-2">
               {["1KG", "500G"].map((w) => (
                 <button
                   key={w}
                   onClick={() => setSelected(w)}
-                  className={`inline-flex h-9 items-center rounded-full px-3 text-sm font-medium ${selected === w
-                    ? "border-2 border-green-600 text-green-700 bg-white"
-                    : "border bg-white"
+                  className={`inline-flex h-10 items-center rounded-full px-5 text-sm font-medium transition-all duration-300 hover:scale-105 ${selected === w
+                    ? "border-2 border-green-600 text-green-700 bg-green-50 shadow-lg shadow-green-100"
+                    : "border bg-white hover:border-green-300 hover:bg-green-50"
                     }`}
                 >
                   {w}
@@ -401,18 +570,18 @@ export default function ProductDetailPage() {
             </div>
             <p className="mt-2 text-xs text-gray-500">
               Giá hiển thị đang áp dụng cho tuỳ chọn{" "}
-              <span className="font-medium">{selected}</span>.
+              <span className="font-medium text-green-700">{selected}</span>.
             </p>
           </div>
 
           {/* Quantity + Add to cart */}
           <div className="flex items-center gap-4">
             <span className="font-semibold">Số lượng:</span>
-            <div className="flex items-center rounded-lg border w-full max-w-[220px]">
+            <div className="flex items-center rounded-xl border w-full max-w-[220px] shadow-sm">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-l-lg"
+                className="h-10 w-10 rounded-l-xl hover:bg-green-50 hover:text-green-700 transition-all duration-300"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 disabled={!canDec}
                 aria-label="Giảm số lượng"
@@ -420,7 +589,7 @@ export default function ProductDetailPage() {
                 <Minus className="h-4 w-4" />
               </Button>
               <span
-                className="min-w-[64px] flex-1 text-center font-medium"
+                className="min-w-[64px] flex-1 text-center font-bold text-lg"
                 aria-live="polite"
               >
                 {quantity}
@@ -428,7 +597,7 @@ export default function ProductDetailPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-r-lg"
+                className="h-10 w-10 rounded-r-xl hover:bg-green-50 hover:text-green-700 transition-all duration-300"
                 onClick={() => setQuantity((q) => (canInc ? q + 1 : q))}
                 disabled={!canInc}
                 aria-label="Tăng số lượng"
@@ -437,21 +606,22 @@ export default function ProductDetailPage() {
               </Button>
             </div>
             {stock !== undefined && (
-              <span className="text-sm text-gray-500 shrink-0">
+              <span className={`text-sm shrink-0 font-medium ${outOfStock ? 'text-red-500' : 'text-green-600'}`}>
                 {outOfStock ? "Hết hàng" : `Còn ${stock} kg`}
               </span>
             )}
           </div>
 
+          {/* Action buttons với animation */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button
               size="lg"
-              className="w-full h-12 rounded-lg bg-green-600 text-white hover:bg-green-700 font-semibold disabled:opacity-60"
+              className={`cta-pulse w-full h-12 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 font-semibold disabled:opacity-60 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${added ? 'animate-bounce-in' : ''}`}
               onClick={handleAddToCart}
               disabled={outOfStock || adding}
             >
               {added ? (
-                <Check className="h-5 w-5 mr-2" />
+                <Check className="h-5 w-5 mr-2 animate-bounce-in" />
               ) : (
                 <ShoppingCart className="h-5 w-5 mr-2" />
               )}
@@ -460,318 +630,253 @@ export default function ProductDetailPage() {
             <Button
               variant="outline"
               size="lg"
-              className="w-full h-12 rounded-lg"
+              className="w-full h-12 rounded-xl border-2 hover:border-green-500 hover:bg-green-50 hover:text-green-700 transition-all duration-300 hover:scale-[1.02]"
               onClick={() => navigate("/cart")}
             >
               XEM GIỎ HÀNG
             </Button>
           </div>
 
+          {/* Product description with animation */}
           {product.description && (
-            <div className="pt-20  border-t w-full">
-              <h3 className="font-extrabold text-3xl  text-black font-semi">Thông tin sản phẩm</h3>
+            <AnimatedSection delay={200}>
+              <div className="pt-8 border-t w-full">
+                <h3 className="font-extrabold text-2xl text-gray-900 mb-4 flex items-center gap-2">
+                  <Sprout className="w-6 h-6 text-green-600" />
+                  Thông tin sản phẩm
+                </h3>
 
-              <div className="mb-4">
-                <button className="pt-1 pb-10 text-orange-950 border-b-1 border-amber-900 w-full text-left font-thin">
-                  Xem chi tiết nguồn gốc và quy trình sản xuất
-                </button>
-              </div>
-
-              {/* Subsection "Thông tin truy xuất nguồn gốc" with icon */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-white-100 dark:bg-green-900/10 rounded-lg">
-                  <Sprout className="w-5 h-5 text-green-600 dark:text-green-500" />
+                <div className="mb-4">
+                  <button className="py-3 text-green-700 border-b border-green-200 w-full text-left font-medium hover:text-green-800 hover:bg-green-50 rounded-lg px-3 transition-all duration-300">
+                    Xem chi tiết nguồn gốc và quy trình sản xuất
+                  </button>
                 </div>
-                <h3 className="font-semibold text-xl text-foreground">Thông tin truy xuất nguồn gốc</h3>
+
+                {/* Subsection with animation */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Sprout className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold text-xl text-gray-800">Thông tin truy xuất nguồn gốc</h3>
+                </div>
+
+                {/* Table with details */}
+                <div className="overflow-hidden rounded-xl border border-green-200 bg-white shadow-lg">
+                  <table className="w-full table-auto">
+                    <tbody className="divide-y divide-green-100">
+                      {/* Tên sản phẩm */}
+                      {product.name && (
+                        <tr className="hover:bg-green-50 transition-colors duration-300">
+                          <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-green-50">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-white rounded-lg border-2 border-green-200 shadow-sm" style={{
+                                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                              }}>
+                                <Package className="w-5 h-5 text-green-600" />
+                              </div>
+                              Tên sản phẩm
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-700 font-semibold">{product.name}</td>
+                        </tr>
+                      )}
+
+                      {/* Lô số */}
+                      {product.description.lotNumber && (
+                        <tr className="hover:bg-green-50 transition-colors duration-300">
+                          <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-green-50">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-white rounded-lg border-2 border-green-200 shadow-sm" style={{
+                                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                              }}>
+                                <Box className="w-5 h-5 text-green-600" />
+                              </div>
+                              Lô số
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-700">{product.description.lotNumber}</td>
+                        </tr>
+                      )}
+
+                      {/* Giống */}
+                      {product.description.variety && (
+                        <tr className="hover:bg-green-50 transition-colors duration-300">
+                          <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-green-50">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-white rounded-lg border-2 border-green-200 shadow-sm" style={{
+                                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                              }}>
+                                <Sprout className="w-5 h-5 text-green-600" />
+                              </div>
+                              Giống
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-700">{product.description.variety}</td>
+                        </tr>
+                      )}
+
+                      {/* Ngày gieo trồng */}
+                      {product.description?.numberOfHarvestDays && (
+                        <tr className="hover:bg-green-50 transition-colors duration-300">
+                          <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-green-50">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-white rounded-lg border-2 border-green-200 shadow-sm" style={{
+                                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                              }}>
+                                <Calendar className="w-5 h-5 text-green-600" />
+                              </div>
+                              Ngày gieo trồng
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-700">
+                            {plantingDate.toLocaleDateString('vi-VN')}
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* Phân bón */}
+                      {product.description.fertilizer && product.description.fertilizer.length > 0 && (
+                        <tr className="hover:bg-green-50 transition-colors duration-300">
+                          <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-green-50">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-white rounded-lg border-2 border-green-200 shadow-sm" style={{
+                                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                              }}>
+                                <Droplet className="w-5 h-5 text-green-600" />
+                              </div>
+                              Phân bón
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-700">
+                            <div className="flex flex-wrap gap-1.5">
+                              {product.description.fertilizer.map((item, index) => (
+                                <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors duration-300">
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* Thuốc BVTV */}
+                      {product.description.pesticide && product.description.pesticide.length > 0 && (
+                        <tr className="hover:bg-green-50 transition-colors duration-300">
+                          <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-green-50">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-white rounded-lg border-2 border-green-200 shadow-sm" style={{
+                                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                              }}>
+                                <Shield className="w-5 h-5 text-green-600" />
+                              </div>
+                              Thuốc BVTV
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-700">
+                            <div className="flex flex-wrap gap-1.5">
+                              {product.description.pesticide.map((item, index) => (
+                                <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors duration-300">
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* Ngày thu hoạch */}
+                      {product.description?.numberOfHarvestDays && (
+                        <tr className="hover:bg-green-50 transition-colors duration-300">
+                          <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-green-50">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-white rounded-lg border-2 border-green-200 shadow-sm" style={{
+                                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                              }}>
+                                <Calendar className="w-5 h-5 text-green-600" />
+                              </div>
+                              Ngày thu hoạch
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-700">
+                            {harvestDate.toLocaleDateString('vi-VN')}
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* Đóng gói tại */}
+                      {product.description.packaging && (
+                        <tr className="hover:bg-green-50 transition-colors duration-300">
+                          <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-green-50">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-white rounded-lg border-2 border-green-200 shadow-sm" style={{
+                                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
+                              }}>
+                                <Package className="w-5 h-5 text-green-600" />
+                              </div>
+                              Đóng gói tại
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-700">
+                            {product.description.packaging}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-
-              {/* Table with details */}
-              <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
-                <table className="w-full table-auto">
-                  <tbody className="divide-y divide-gray-300">
-                    {/* Tên sản phẩm */}
-                    {product.name && (
-                      <tr className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
-                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
-                            }}>
-                              <Package className="w-5 h-5 text-green-600 dark:text-green-500" />
-                            </div>
-                            Tên sản phẩm
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-700 font-semibold">{product.name}</td>
-                      </tr>
-                    )}
-
-                    {/* Lô số */}
-                    {product.description.lotNumber && (
-                      <tr className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
-                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
-                            }}>
-                              <Box className="w-5 h-5 text-green-600 dark:text-green-500" />
-                            </div>
-                            Lô số
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-700">{product.description.lotNumber}</td>
-                      </tr>
-                    )}
-
-                    {/* Giống */}
-                    {product.description.variety && (
-                      <tr className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
-                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
-                            }}>
-                              <Sprout className="w-5 h-5 text-green-600 dark:text-green-500" />
-                            </div>
-                            Giống
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-700">{product.description.variety}</td>
-                      </tr>
-                    )}
-
-                    {/* Ngày gieo trồng */}
-                    {product.description?.numberOfHarvestDays && (
-                      <tr className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
-                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
-                            }}>
-                              <Calendar className="w-5 h-5 text-green-600 dark:text-green-500" />
-                            </div>
-                            Ngày gieo trồng
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-700">
-                          {plantingDate.toLocaleDateString('vi-VN')}
-                        </td>
-                      </tr>
-                    )}
-
-                    {/* Phân bón */}
-                    {product.description.fertilizer && product.description.fertilizer.length > 0 && (
-                      <tr className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
-                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
-                            }}>
-                              <Droplet className="w-5 h-5 text-green-600 dark:text-green-500" />
-                            </div>
-                            Phân bón
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-700">
-                          <div className="flex flex-wrap gap-1.5">
-                            {product.description.fertilizer.map((item, index) => (
-                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-
-                    {/* Thuốc BVTV */}
-                    {product.description.pesticide && product.description.pesticide.length > 0 && (
-                      <tr className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
-                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
-                            }}>
-                              <Shield className="w-5 h-5 text-green-600 dark:text-green-500" />
-                            </div>
-                            Thuốc BVTV
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-700">
-                          <div className="flex flex-wrap gap-1.5">
-                            {product.description.pesticide.map((item, index) => (
-                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-
-                    {/* Ngày thu hoạch */}
-                    {product.description?.numberOfHarvestDays && (
-                      <tr className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
-                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
-                            }}>
-                              <Calendar className="w-5 h-5 text-green-600 dark:text-green-500" />
-                            </div>
-                            Ngày thu hoạch
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-700">
-                          {harvestDate.toLocaleDateString('vi-VN')}
-                        </td>
-                      </tr>
-                    )}
-
-                    {/* Đóng gói tại */}
-                    {product.description.packaging && (
-                      <tr className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 font-medium text-gray-700 w-1/3 bg-gray-100">
-                          <div className="flex items-center gap-2">
-                            <div className="p-2 bg-white rounded-lg border-2 border-gray-300" style={{
-                              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)'
-                            }}>
-                              <Package className="w-5 h-5 text-dark-600 dark:text-green-500" />
-                            </div>
-                            Đóng gói tại
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-700">
-                          {product.description.packaging}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            </AnimatedSection>
           )}
 
         </div>
       </div>
 
       {/* Reviews block — đặt TRƯỚC Related */}
-      <div className="max-w-6xl mx-auto px-4 pb-10" ref={reviewsRef}>
-        <Reviews
-          productId={product._id}
-          checkOrderHistory={checkOrderHistory}
-        />
-      </div>
+      <AnimatedSection delay={300} className="max-w-6xl mx-auto px-4 pb-10">
+        <div ref={reviewsRef}>
+          <Reviews
+            productId={product._id}
+            checkOrderHistory={checkOrderHistory}
+          />
+        </div>
+      </AnimatedSection>
 
-      {/* Related */}
+      {/* Related Products with animation */}
       {relatedProducts?.length > 0 && (
-        <div className="max-w-6xl mx-auto px-4 pb-10">
-          <div className="bg-green-800 text-white text-center py-3 rounded-t-xl mb-6">
-            <h2 className="text-lg font-semibold tracking-wide">
+        <AnimatedSection delay={400} className="max-w-6xl mx-auto px-4 pb-10">
+          <div className="animated-header bg-gradient-to-r from-green-700 via-emerald-600 to-green-700 text-white text-center py-4 rounded-t-xl mb-6 shadow-lg">
+            <h2 className="text-lg font-semibold tracking-wide flex items-center justify-center gap-2">
+              <span className="w-8 h-0.5 bg-white/50 rounded-full" />
               SẢN PHẨM LIÊN QUAN
+              <span className="w-8 h-0.5 bg-white/50 rounded-full" />
             </h2>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {relatedProducts.map((p) => {
-              const pImg =
-                p.images?.[0]?.url ?? p.images?.[0] ?? "/placeholder.svg";
-              const pPrice = Number.isFinite(p.price) ? p.price : 0;
-              const pOrig = Number.isFinite(p.originalPrice)
-                ? p.originalPrice
-                : 0;
-              return (
-                <div
-                  key={p._id || p.id}
-                  className="rounded-xl border bg-white shadow-sm p-4"
-                >
-                  <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 mb-3">
-                    <img
-                      src={pImg}
-                      alt={p.name}
-                      className="w-full h-full object-cover"
-                    />
-                    {p.badge && (
-                      <span className="absolute top-3 left-3 inline-flex items-center rounded-full bg-emerald-700 text-white text-xs font-semibold px-3 py-1">
-                        {p.badge}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-medium text-sm mb-2 line-clamp-2">
-                    {p.name}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-emerald-700">
-                      {pPrice.toLocaleString("vi-VN")}₫
-                    </span>
-                    {pOrig > pPrice && (
-                      <span className="text-xs text-gray-400 line-through">
-                        {pOrig.toLocaleString("vi-VN")}₫
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {relatedProducts.map((p, index) => (
+              <ProductCard key={p._id || p.id} product={p} index={index} />
+            ))}
           </div>
-        </div>
+        </AnimatedSection>
       )}
 
-      {/* Viewed */}
+      {/* Viewed Products with animation */}
       {viewedProducts?.length > 0 && (
-        <div className="max-w-6xl mx-auto px-4 pb-16">
-          <div className="bg-green-800 text-white text-center py-3 rounded-t-xl mb-6">
-            <h2 className="text-lg font-semibold tracking-wide">
+        <AnimatedSection delay={500} className="max-w-6xl mx-auto px-4 pb-16">
+          <div className="animated-header bg-gradient-to-r from-green-700 via-emerald-600 to-green-700 text-white text-center py-4 rounded-t-xl mb-6 shadow-lg">
+            <h2 className="text-lg font-semibold tracking-wide flex items-center justify-center gap-2">
+              <span className="w-8 h-0.5 bg-white/50 rounded-full" />
               SẢN PHẨM ĐÃ XEM
-              <h2 className="text-lg font-semibold tracking-wide">
-                SẢN PHẨM ĐÃ XEM
-              </h2>
+              <span className="w-8 h-0.5 bg-white/50 rounded-full" />
             </h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {viewedProducts.map((p) => {
-              const pImg =
-                p.images?.[0]?.url ?? p.images?.[0] ?? "/placeholder.svg";
-              const pPrice = Number.isFinite(p.price) ? p.price : 0;
-              const pOrig = Number.isFinite(p.originalPrice)
-                ? p.originalPrice
-                : 0;
-              return (
-                <div
-                  key={p._id || p.id}
-                  className="rounded-xl border bg-white shadow-sm p-4"
-                >
-                  <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 mb-3">
-                    <img
-                      src={pImg}
-                      alt={p.name}
-                      className="w-full h-full object-cover"
-                    />
-                    {p.badge && (
-                      <span className="absolute top-3 left-3 inline-flex items-center rounded-full bg-red-500 text-white text-xs font-semibold px-3 py-1">
-                        {p.badge}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-medium text-sm mb-2 line-clamp-2">
-                    {p.name}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-emerald-700">
-                      {pPrice.toLocaleString("vi-VN")}₫
-                    </span>
-                    {pOrig > pPrice && (
-                      <span className="text-xs text-gray-400 line-through">
-                        {pOrig.toLocaleString("vi-VN")}₫
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {viewedProducts.map((p, index) => (
+              <ProductCard key={p._id || p.id} product={p} index={index} />
+            ))}
           </div>
-        </div>
+        </AnimatedSection>
       )}
     </div>
   );

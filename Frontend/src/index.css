@@ -96,9 +96,272 @@
   }
   --animate-fade-in: fade-in 1s ease-out;
 
+  /* Homepage Animation Effects */
+  --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
+  --animate-fade-in-up-delay-1: fade-in-up 0.6s ease-out 0.1s forwards;
+  --animate-fade-in-up-delay-2: fade-in-up 0.6s ease-out 0.2s forwards;
+  --animate-fade-in-up-delay-3: fade-in-up 0.6s ease-out 0.3s forwards;
+  
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(132, 204, 22, 0.4), 0 0 10px rgba(132, 204, 22, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(132, 204, 22, 0.6), 0 0 30px rgba(132, 204, 22, 0.4);
+    }
+  }
+
+  --animate-shimmer: shimmer 2s infinite;
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  --animate-scale-in: scale-in 0.4s ease-out forwards;
+
+  @keyframes scale-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  --animate-bounce-in: bounce-in 0.6s ease-out forwards;
+
+  @keyframes bounce-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  --animate-float: float 3s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  --animate-slide-in-left: slide-in-left 0.5s ease-out forwards;
+
+  @keyframes slide-in-left {
+    0% {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  --animate-slide-in-right: slide-in-right 0.5s ease-out forwards;
+
+  @keyframes slide-in-right {
+    0% {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  --animate-dot-expand: dot-expand 0.3s ease-out forwards;
+
+  @keyframes dot-expand {
+    0% {
+      width: 10px;
+    }
+    100% {
+      width: 30px;
+    }
+  }
+
   --font-weight-bold: 700;
 
 
+}
+
+/* Shimmer gradient background */
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Product card hover effects */
+.product-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(34, 139, 34, 0.15), 0 0 0 1px rgba(34, 139, 34, 0.1);
+}
+
+.product-card-hover:hover img {
+  transform: scale(1.1);
+}
+
+.product-card-hover img {
+  transition: transform 0.4s ease;
+}
+
+/* Glow effect on hover */
+.glow-on-hover:hover {
+  box-shadow: 0 0 20px rgba(132, 204, 22, 0.5), 0 0 40px rgba(132, 204, 22, 0.3);
+}
+
+/* Parallax wrapper */
+.parallax-wrapper {
+  perspective: 1000px;
+}
+
+.parallax-content {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+/* Stagger animation helper */
+.stagger-item {
+  opacity: 0;
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0s; }
+.stagger-item:nth-child(2) { animation-delay: 0.05s; }
+.stagger-item:nth-child(3) { animation-delay: 0.1s; }
+.stagger-item:nth-child(4) { animation-delay: 0.15s; }
+.stagger-item:nth-child(5) { animation-delay: 0.2s; }
+.stagger-item:nth-child(6) { animation-delay: 0.25s; }
+.stagger-item:nth-child(7) { animation-delay: 0.3s; }
+.stagger-item:nth-child(8) { animation-delay: 0.35s; }
+.stagger-item:nth-child(9) { animation-delay: 0.4s; }
+.stagger-item:nth-child(10) { animation-delay: 0.45s; }
+
+/* Animated section headers */
+.animated-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.animated-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: shimmer 3s infinite;
+}
+
+/* Carousel dots animation */
+.carousel-dot {
+  transition: all 0.3s ease;
+}
+
+.carousel-dot.active {
+  width: 24px;
+  border-radius: 10px;
+}
+
+/* CTA button pulse */
+.cta-pulse {
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-pulse::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.cta-pulse:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* USP card animation */
+.usp-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.usp-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 25px 50px rgba(34, 139, 34, 0.2);
+}
+
+.usp-card:hover .usp-icon {
+  animation: bounce-in 0.6s ease-out;
 }
 .MuiDrawer-paper {
   margin-top: 120px;

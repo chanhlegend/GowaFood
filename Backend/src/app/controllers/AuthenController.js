@@ -43,7 +43,8 @@ class AuthenController {
                 otpExpires,
             });
             await user.save();
-            await sendOtpToEmail(email, otp);
+            // Gửi email OTP trong background (không await để response nhanh hơn)
+            sendOtpToEmail(email, otp).catch(err => console.error("Lỗi gửi OTP:", err));
             res.status(201).json({ message: "Đăng ký thành công. Vui lòng kiểm tra email để xác thực OTP." });
         } catch (error) {
             res.status(500).json({ message: "Internal server error" });
