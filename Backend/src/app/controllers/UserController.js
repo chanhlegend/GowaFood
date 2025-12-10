@@ -65,8 +65,6 @@ class UserController {
             const userId = req.params.id;
             const addressData = req.body;
             
-            console.log('Address data:', addressData);
-            
             // Validate dữ liệu đầu vào
             const { name, phone, address, ward, city} = addressData;
             if (!name || !phone || !address || !ward || !city) {
@@ -96,8 +94,6 @@ class UserController {
             // Thêm địa chỉ mới
             user.addresses.push(addressData);
             await user.save();
-
-            console.log('Address added successfully. New address:', user.addresses[user.addresses.length - 1]);
 
             res.status(201).json({ 
                 message: 'Thêm địa chỉ thành công',

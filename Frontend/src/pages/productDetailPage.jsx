@@ -144,6 +144,7 @@ export default function ProductDetailPage() {
         quantity,
         weight: selected,
       });
+       window.dispatchEvent(new Event("cartUpdated"));
       setAdded(true);
       setTimeout(() => setAdded(false), 1500);
     } catch (e) {
