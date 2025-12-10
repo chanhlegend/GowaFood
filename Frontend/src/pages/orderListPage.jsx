@@ -34,8 +34,6 @@ function Spinner({ size = 24, className = "" }) {
 }
 
 function StatusPill({ status }) {
-  console.log(status);
-  
   const map = {
     pending: { label: "Chờ xử lý", cls: "bg-yellow-100 text-yellow-800" },
     shipping: { label: "Đang giao", cls: "bg-blue-100 text-blue-800" },

@@ -91,7 +91,8 @@ export function Header() {
           // detect admin role
           const roleLike = user?.role ?? user?.roles ?? user?.isAdmin;
           let admin = false;
-          if (typeof roleLike === "string") admin = roleLike.toLowerCase() === "admin";
+          if (typeof roleLike === "string")
+            admin = roleLike.toLowerCase() === "admin";
           else if (typeof roleLike === "boolean") admin = roleLike;
           setIsAdmin(!!admin);
 
@@ -120,12 +121,19 @@ export function Header() {
       checkAuthStatus();
     };
 
+    // 👉 Lắng nghe khi giỏ hàng được cập nhật trong cùng tab
+    const handleCartUpdated = () => {
+      checkAuthStatus(); // gọi lại để load lại số lượng từ backend
+    };
+
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("authChange", handleAuthChange);
+    window.addEventListener("cartUpdated", handleCartUpdated);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("authChange", handleAuthChange);
+      window.removeEventListener("cartUpdated", handleCartUpdated);
     };
   }, []);
 
@@ -221,7 +229,7 @@ export function Header() {
 
               {isAdmin && (
                 <button
-                  onClick={() => navigate('/admin-dashboard')}
+                  onClick={() => navigate("/admin-dashboard")}
                   className="
                       relative px-2 py-1 xs:px-3 xs:py-2 lg:px-6 lg:py-3
                       text-xs xs:text-sm lg:text-[18px] font-semibold text-green-800
@@ -440,7 +448,9 @@ export function Header() {
                     "
                   onClick={() => navigate("/login")}
                 >
-                  <span className="px-2 xs:px-3 py-1 xs:py-2 bg-custom-green/20 rounded-xl hover:bg-custom-green/30  cursor-pointer text-center text-xs xs:text-sm">Đăng nhập</span>
+                  <span className="px-2 xs:px-3 py-1 xs:py-2 bg-custom-green/20 rounded-xl hover:bg-custom-green/30  cursor-pointer text-center text-xs xs:text-sm">
+                    Đăng nhập
+                  </span>
                 </Button>
               )}
 
@@ -540,7 +550,7 @@ export function Header() {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  navigate('/admin-dashboard');
+                  navigate("/admin-dashboard");
                 }}
                 className="
                   w-full text-left px-3 py-2 xs:px-4 xs:py-3 text-sm xs:text-base sm:text-lg lg:text-xl font-semibold text-green-800

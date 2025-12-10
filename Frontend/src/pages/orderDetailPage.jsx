@@ -234,14 +234,6 @@ export default function OrderDetailPage() {
         const orderTotal = order.amounts?.total || 0;
         const pointsFromMoney = Math.floor(orderTotal / 1000);
         const newPoints = pointsToRestore - pointsFromMoney;
-        console.log(
-          "Points to restore:",
-          pointsToRestore,
-          "Points from money:",
-          pointsFromMoney,
-          "New points balance:",
-          newPoints
-        );
         await UserService.updateRewardPoints(userId, newPoints);
         toast.success("Hủy đơn hàng thành công");
         // Cập nhật điểm thưởng cho user

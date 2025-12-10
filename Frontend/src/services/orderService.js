@@ -5,7 +5,6 @@ const API_URL = `${API_BASE_URL}/api/orders`;
 
 const OrderService = {
   createOrder: async (orderData) => {
-    console.log("Creating order with data:", orderData);
     try {
       const response = await axios.post(`${API_URL}/createOrder`, orderData);
       return {
@@ -68,8 +67,6 @@ const OrderService = {
   },
 
   cancelOrder: async (orderId) => {
-    console.log("Canceling order with ID:", orderId);
-    
     try {
       const response = await axios.put(
         `${API_URL}/cancel/${orderId}`
