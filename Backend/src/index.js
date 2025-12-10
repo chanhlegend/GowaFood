@@ -17,6 +17,9 @@ db.connect();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174', 
+  'http://192.168.1.44:5173',
+  'http://192.168.1.44:5174',
+  'http://192.168.1.44:3000',
   'https://gowa-food-app.vercel.app',
   'https://gowafood.vercel.app',
   process.env.FRONTEND_URL
